@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%-include('./layouts/head') %>
+
+  <body id="page-top">
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <%-include('./layouts/sidebar') %>
+      <!-- End of Sidebar -->
+
+      <!-- Content Wrapper -->
+      <div id="content-wrapper" class="d-flex flex-column">
+        <!-- Main Content -->
+        <div>
+          <!-- Topbar -->
+          <%-include('./layouts/topbar') %>
+          <!-- End of Topbar -->
+
+          <!-- Begin Page Content -->
+          <div class="container-fluid">
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+              <h1 class="h3 mb-0 text-gray-800">Edit Blog</h1>
+            </div>
+
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <div id="blog-edit-msg" class="alert alert-success d-none" role="alert"></div>
+                 <input type="hidden" id="blogId" name="blogId" value="<%=blog._id %>">
+                <form id="editBlogForm" enctype="multipart/form-data">
+
+                  <div class="form-group">
+                    <label for="title" class="form-label required">Blog Title</label>
+                    <input type="text" class="form-control" id="title" name="title" placeholder="Enter blog title" value="<%=blog.title %>" />
+                    <div class="text-danger" data-error="title"></div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="category" class="form-label required">Category</label>
+                    <select class="form-control" id="category" name="category">
+                      <option value="">Select category</option>
+                      <% blogCategories.forEach((item)=>{ %>
+                      <option value="<%= item._id %>"  <%=item._id.toString()===blog.category._id.toString()? "selected":"" %>><%=item.name %></option>
+                      <% }) %>
+                    </select>
+                    <div class="text-danger" data-error="category"></div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="content" class="required">Content</label>
+
+                    <div id="quillContent" style="height: 250px" class="bg-white"><%-blog.content %></div>
+                    <div class="text-danger" data-error="content"></div>
+
+                    <textarea id="content" name="content" style="display: none"><%=blog.content%></textarea>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="coverImage" class="form-label required">Cover Image</label>
+                    <div class="d-flex align-items-center gap-3">
+                      <input type="file" class="form-control-file" id="coverImage" name="coverImage" style="max-width: 250px" value="" />
+                      <img id="coverImagePreview" src="/<%=blog.coverImage%>"  style="max-width: 100px;" />
+                    </div>
+                    <div class="text-danger" data-error="coverImage"></div>
+                  </div>
+
+                  <!-- Submit Button -->
+                  <div class="text-left">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <!-- /.container-fluid -->
+        </div>
+        <!-- End of Main Content -->
+
+        <!-- Footer -->
+        <%-include('./layouts/footer') %>
+        <!-- End of Footer -->
+      </div>
+      <!-- End of Content Wrapper -->
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+      <i class="fas fa-angle-up"></i>
+    </a>
+
+    <%-include('./layouts/footer-scripts') %>
+
+    <script>
+      $(document).ready(function () {
+        const quillContent = new Quill("#quillContent", {
+          theme: "snow",
+           modules: {
+            toolbar: [
+              [{ header: [1, 2, 3, false] }],
+              ["bold", "italic", "underline", "strike"],
+              [{ color: [] }, { background: [] }],
+              [{ align: [] }],
+              [{ list: "ordered" }, { list: "bullet" }],
+              ["blockquote", "code-block"],
+              ["link"],
+              ["clean"],
+            ],
+            clipboard: {
+              matchVisual: false,
+            }
+          },
+        });
+
+        $("#editBlogForm").submit(function (e) {
+          e.preventDefault();
+
+          $("#content").val(quillContent.root.innerHTML);
+
+          const blogId=$('#blogId').val();
+            if(!blogId){
+                return;
+            }
+
+          const title = $("#title").val().trim();
+          const content = $("#content").val();
+          const category = $("#category").val();
+          const imageFile = $("#coverImage")[0].files[0];
+
+          let hasError = false;
+
+          $("[data-error]").text("");
+
+          if (!title) {
+            $('[data-error="title"]').text("Title is required");
+            hasError = true;
+          }
+          if (!content || content === "<p><br></p>") {
+            $('[data-error="content"]').text("Content is required");
+            hasError = true;
+          }
+          if (!category) {
+            $('[data-error="category"]').text("Category is required");
+            hasError = true;
+          }
+
+          if (!imageFile && !$("#coverImagePreview").attr("src")) {
+             $('[data-error="coverImage"]').text("Cover image is required");
+            hasError = true;
+            }
+
+          if (hasError) return;
+
+          const formData = new FormData(this);
+
+          $.ajax({
+            url: `/admin/blogs/${blogId}/update`,
+            type: "PUT",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+             
+              window.location.href='/admin/blogpage'
+
+              $("[data-error]").text("");
+
+              $("#blog-edit-msg").text(response.message).removeClass("d-none");
+
+              setTimeout(() => {
+                $("#blog-edit-msg").addClass("d-none");
+              }, 3000);
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+              if (xhr.responseJSON && xhr.responseJSON.errors) {
+                const errors = xhr.responseJSON.errors;
+                for (let field in errors) {
+                  $(`[data-error="${field}"]`).text(errors[field]);
+                }
+              } else {
+                const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+                Swal.fire({
+                  icon: "error",
+                  title: "Oops...",
+                  text: errorMsg,
+                  showConfirmButton: true,
+                });
+              }
+            },
+          });
+        });
+
+        
+        $("#coverImage").on("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+              $("#coverImagePreview").attr("src", e.target.result).show();
+            };
+
+            reader.readAsDataURL(file);
+          } else {
+            $("#coverImagePreview").hide();
+          }
+        });
+
+        function handleAuthRedirect(error) {
+          const response = error.responseJSON;
+          if (error.status === 401) {
+            window.location.href = "/auth/login";
+            return true;
+          }
+          return false;
+        }
+      });
+    </script>
+  </body>
+</html>

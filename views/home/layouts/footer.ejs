@@ -1,0 +1,32 @@
+  <footer class="footer mt-auto py-5" style="background-color: rgb(29 25 52); color: white;">
+  <div class="container">
+    <div class="row">
+      
+      <!-- About Us (Left Side) -->
+      <div class="col-md-6 mb-4 pe-md-5 border-end border-secondary" style="border-right: 1px solid rgba(255, 255, 255, 0.2);">
+        <div class="d-flex align-items-center mb-2">
+          <img src="/<%= portalSetting.logo || '/assets/img/logo.png' %>" alt="JobPortalPro" class="footer-logo me-2">
+          <h5 class="mb-0 text-white"><%= portalSetting.portalName || 'CareerBase' %></h5>
+        </div>
+        <p class="text-light small">
+         <%=portalSetting.aboutUs%>
+        </p>
+      </div>
+
+      <!-- Contact Info (Right Side) -->
+      <div class="col-md-6 mb-4 ps-md-5">
+        <h6 class="text-uppercase text-white">Contact Us</h6>
+        <p class="mb-1 text-light"><strong>Email:</strong> <%=portalSetting.portalEmail %></p>
+        <p class="mb-1 text-light"><strong>Phone:</strong> <%=portalSetting.contactNumber %></p>
+        <p class="mb-1 text-light"><strong>Address:</strong> <%=portalSetting.address %></p>
+      </div>
+    </div>
+
+    <hr class="border-secondary my-4" />
+    <div class="text-center">
+      <p class="text-muted small mb-0" style="color: rgba(255, 255, 255, 0.6) !important;">
+        &copy; <%=new Date().getFullYear()%> <%=portalSetting.portalName %>. All rights reserved.
+      </p>
+    </div>
+  </div>
+</footer>

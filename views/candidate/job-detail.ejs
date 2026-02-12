@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zxx">
+  <%- include('./layouts/head') %>
+
+  <body>
+    <%- include('./layouts/header') %>
+    <main>
+      <div class="container my-5">
+        <!-- Top Job Header -->
+        <div class="job-header shadow">
+          <button
+            class="btn btn-sm btn-light bookmark-icon <%=job.isBookmarked?'bookmarked':''%>"
+            data-job-id="<%=job._id%>"
+            id="bookmark-btn"
+            title="Save Job"
+          >
+            <i class="<%=job.isBookmarked?'fas':'far'%> fa-bookmark" title="Bookmark Job"></i>
+          </button>
+          <div class="row align-items-center">
+            <div class="col-md-9">
+              <h2><%=job.title %></h2>
+              <p class="mb-1"><strong><%=job.company.name %></strong></p>
+
+              <div class="job-meta mt-3 text-muted">
+                <div class="mb-1">
+                  <i class="fas fa-map-marker-alt"></i> <%=job.location.map((item)=>item.name).join(', ') %> <i class="fas fa-briefcase ms-4"></i> <%=
+                  job.minimumExperience%> <%=job.maximumExperience !== null ? "-" + job.maximumExperience : "+" %> Years 
+                  
+                  <% if (job.experienceLevel) {
+                  %>
+                  <i class="fa fa-star ms-4"></i>
+                  <%= job.experienceLevel %> 
+                  <% } %>
+
+                  <i class="fas fa-rupee-sign ms-4"></i>
+                  <% if (job.minimumSalary != null && job.maximumSalary != null) { %> <%= (job.minimumSalary / 100000).toFixed(1) %> – <%=
+                  (job.maximumSalary / 100000).toFixed(1) %> LPA <% } else if (job.minimumSalary != null) { %> From <%= (job.minimumSalary /
+                  100000).toFixed(1) %> LPA <% } else if (job.maximumSalary != null) { %> Up to <%= (job.maximumSalary / 100000).toFixed(1) %> LPA <%
+                  } else { %> Not Disclosed <% } %>
+                </div>
+                <div>
+                  <i class="far fa-clock"></i> Posted: <%= postedTimeAgo %> <% if(job.applicationCount>0){ %>
+                  <i class="fas fa-users ms-4"></i> Applications: <%=job.applicationCount %> <% }%>
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <% if(job.isApplied){ %>
+                <button class="btn btn-success me-2" disabled><i class="fas fa-check-circle me-1"></i> Applied</button>
+                <% }else{%>
+                <button class="btn btn-apply me-2" id="apply-btn" data-job-id="<%=job._id%>">
+                  <i class="fas fa-paper-plane me-1"></i> Apply Now
+                </button>
+                <% } %>
+                <div id="apply-message" style="margin-top: 8px; font-size: 0.9rem; color: #d9534f; display: none"></div>
+              </div>
+            </div>
+
+            <div class="col-md-3 text-end">
+              <img src="<%=job.company.logo? '/'+job.company.logo:'/assets/img/no-image.png' %>" class="company-logo" alt="Company Logo" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Job Description & More Info -->
+        <div class="section-box shadow-sm">
+          <h4 class="section-title">Job Description</h4>
+
+          <div class="ql-editor job-description"><%-job.description %></div>
+
+          <h4 class="section-title mt-5">More Information</h4>
+          <ul class="list-unstyled">
+            <li><strong>Industry:</strong> <%=job.industry.name %></li>
+            <li><strong>Job Category:</strong> <%=job.jobCategory.name %></li>
+            <li><strong>Job Type:</strong> <%=job.jobType %></li>
+            <li><strong>Work Mode:</strong> <%=job.workMode %></li>
+          </ul>
+
+          <h4 class="section-title mt-5">Key Skills</h4>
+          <div>
+            <% job.skillsRequired.forEach((skill)=>{ %>
+            <span class="badge-skill"><%=skill.name %></span>
+            <% }) %>
+          </div>
+        </div>
+
+        <!-- Company Description -->
+        <div class="section-box shadow-sm">
+          <h4 class="section-title">About the Company</h4>
+          <div><%=job.company.description%></div>
+        </div>
+      </div>
+    </main>
+    <%- include('./layouts/footer') %> <%- include('./layouts/footer-scripts') %>
+
+    <script>
+      $(document).ready(function () {
+        $("#bookmark-btn").on("click", function (e) {
+          e.preventDefault();
+
+          const button = $(this);
+          const jobId = button.data("job-id");
+          const isBookmarked = button.hasClass("bookmarked");
+
+          const url = isBookmarked ? `/candidate/jobs/${jobId}/unbookmark` : `/candidate/jobs/${jobId}/bookmark`;
+
+          $.ajax({
+            url: url,
+            type: "POST",
+            success: function (response) {
+              button.toggleClass("bookmarked");
+              button.find("i").toggleClass("far fas");
+            },
+            error: function (error) {
+              if (handleAuthRedirect(error)) return;
+              alert(error.responseJSON.message || "Something went wrong.Try again later");
+            },
+          });
+        });
+
+        $("#apply-btn").on("click", function (e) {
+          e.preventDefault();
+
+          const button = $(this);
+          const jobId = $(this).data("job-id");
+
+          $.ajax({
+            url: `/candidate/jobs/${jobId}/apply`,
+            type: "POST",
+            success: function (response) {
+              // console.log(response);
+
+              $("#apply-message").text(response.message).css({ color: "#28a745" }).fadeIn();
+
+              button.text("Applied");
+              button.prop("disabled", true);
+              button.removeClass("btn-apply").addClass("btn-success");
+              button.prepend('<i class="fas fa-check-circle me-1"></i>');
+
+              setTimeout(() => {
+                $("#apply-message").fadeOut();
+              }, 3000);
+            },
+            error: function (error) {
+              if (handleAuthRedirect(error)) return;
+              const message = error.responseJSON?.message || "Something went wrong.";
+              $("#apply-message").text(message).css({ color: "#d9534f" }).fadeIn();
+
+              setTimeout(() => {
+                $("#apply-message").fadeOut();
+              }, 5000);
+            },
+          });
+        });
+
+        function handleAuthRedirect(error) {
+          const response = error.responseJSON;
+          if (error.status === 401) {
+            window.location.href = "/auth/login";
+            return true;
+          }
+          return false;
+        }
+      });
+    </script>
+  </body>
+</html>

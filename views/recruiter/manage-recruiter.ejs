@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%-include('./layouts/head') %>
+
+  <body id="page-top">
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <%-include('./layouts/sidebar') %>
+      <!-- End of Sidebar -->
+
+      <!-- Content Wrapper -->
+      <div id="content-wrapper" class="d-flex flex-column">
+        <!-- Main Content -->
+        <div id="content">
+          <!-- Topbar -->
+          <%-include('./layouts/topbar') %>
+          <!-- End of Topbar -->
+
+          <!-- Begin Page Content -->
+          <div class="container-fluid">
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+              <h1 class="h3 mb-0 text-gray-800">Manage Recruiter</h1>
+            </div>
+
+            <div class="card shadow mb-4">
+              <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Recruiters List</h6>
+              </div>
+
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-sm text-dark" id="recruitersTable" width="100%" cellspacing="0">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Registered At</th>
+                        <th>Designation</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% recruiters.forEach((recruiter) => { %>
+                      <tr id="row-<%= recruiter._id %>">
+                        <td><%=recruiter.name %></td>
+                        <td><%=recruiter.email %></td>
+                        <td><%=recruiter.createdAtFormatted %></td>
+                        <td><%=recruiter.recruiterProfile && recruiter.recruiterProfile.designation?recruiter.recruiterProfile.designation:'' %></td>
+                        <td class="recruiter-status">
+                          <% if(recruiter.recruiterProfile.approvalStatus === 'pending'){ %>
+                          <span class="badge badge-warning">Pending</span>
+                          <% }else{ %>
+
+                          <span class="badge <%= recruiter.recruiterProfile.isActive ? 'badge-success' : 'badge-warning' %>">
+                            <%= recruiter.recruiterProfile.isActive ? 'Activate' : 'Inactive' %>
+                          </span>
+                          <% } %>
+                        </td>
+
+                        <td class="recruiter-action">
+                          <% if(recruiter.recruiterProfile.approvalStatus === 'pending'){ %>
+                          <button class="btn btn-sm btn-primary approve-btn" data-id="<%=recruiter._id %>">Approve</button>
+                          <button class="btn btn-sm btn-danger reject-btn" data-id="<%=recruiter._id %>">Reject</button>
+                          <% }else{ %>
+                          <button
+                            class="btn btn-sm <%= recruiter.recruiterProfile.isActive ? 'deactivate-btn btn-warning' : 'activate-btn btn-success' %>"
+                            data-id="<%=recruiter._id %>"
+                          >
+                            <%= recruiter.recruiterProfile.isActive ? 'Deactivate' : 'Activate' %>
+                          </button>
+                          <% } %>
+                        </td>
+                      </tr>
+
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /.container-fluid -->
+        </div>
+        <!-- End of Main Content -->
+
+        <!-- Footer -->
+        <%-include('./layouts/footer') %>
+        <!-- End of Footer -->
+      </div>
+      <!-- End of Content Wrapper -->
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+      <i class="fas fa-angle-up"></i>
+    </a>
+
+    <%-include('./layouts/footer-scripts') %>
+    <script>
+      $(document).ready(function () {
+        $("#recruitersTable").DataTable({
+          pageLength: 10,
+          lengthChange: false,
+          searching: true,
+          ordering: true,
+        });
+
+        $(document).on("click", ".approve-btn", function () {
+          const conf = confirm("Do you want to approve this recruiter?");
+          if (!conf) {
+            return false;
+          }
+
+          const id = $(this).data("id");
+          const row = $(`#row-${id}`);
+
+          $.ajax({
+            url: `/recruiter/${id}/approve`,
+            type: "PUT",
+            success: function (response) {
+              row.find(".recruiter-status").html(`<span class="badge badge-success">Active</span>`);
+
+              row.find(".recruiter-action").html(`<button class="btn btn-sm deactivate-btn btn-warning" data-id="${id}">Deactivate</button>`);
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        });
+
+        $(document).on("click", ".deactivate-btn", function () {
+          const conf = confirm("Do you want to deactivate this recruiter?");
+          if (!conf) {
+            return false;
+          }
+          const id = $(this).data("id");
+          const row = $(`#row-${id}`);
+
+          $.ajax({
+            url: `/recruiter/${id}/deactivate`,
+            type: "PUT",
+            success: function (response) {
+              row.find(".recruiter-status").html(`<span class="badge badge-warning">Inactive</span>`);
+
+              row.find(".recruiter-action").html(`<button class="btn btn-sm activate-btn btn-success" data-id="${id}">Activate</button>`);
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        });
+
+        $(document).on("click", ".activate-btn", function () {
+          const conf = confirm("Do you want to activate this recruiter?");
+          if (!conf) {
+            return false;
+          }
+
+          const id = $(this).data("id");
+          const row = $(`#row-${id}`);
+
+          $.ajax({
+            url: `/recruiter/${id}/activate`,
+            type: "PUT",
+            success: function (response) {
+              row.find(".recruiter-status").html(`<span class="badge badge-success">Active</span>`);
+
+              row.find(".recruiter-action").html(`<button class="btn btn-sm deactivate-btn btn-warning" data-id="${id}">Deactivate</button>`);
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        });
+
+        $(document).on("click", ".reject-btn", function () {
+          const conf = confirm("Are you sure you want to reject this recruiter? This action will remove this recruiter from the company profile.");
+          if (!conf) {
+            return false;
+          }
+
+          const reason = prompt("Please enter a reason for rejection:");
+          if (!reason) {
+            alert("Rejection reason is required.");
+            return;
+          }
+
+          const id = $(this).data("id");
+          const row = $(`#row-${id}`);
+          $.ajax({
+            url: `/recruiter/${id}/reject`,
+            type: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify({ reason }),
+            success: function (response) {
+              row.remove();
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        });
+
+        function handleAuthRedirect(error) {
+          const response = error.responseJSON;
+          if (error.status === 401) {
+            window.location.href = "/auth/login";
+            return true;
+          }
+          return false;
+        }
+      });
+    </script>
+  </body>
+</html>

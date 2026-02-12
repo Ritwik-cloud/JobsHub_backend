@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zxx">
+  <%- include('./layouts/head') %>
+
+  <body>
+    <%- include('./layouts/header') %>
+
+    <main class="bg-light">
+      <div class="container py-4">
+        <h2 class="mb-4">Candidate Profile</h2>
+
+        <!-- Basic Info -->
+        <div class="card shadow-sm mb-4 position-relative">
+          <div class="card-body d-flex align-items-start">
+            <!-- Edit Icon -->
+            <i class="bi bi-pencil-square position-absolute top-0 end-0 m-3 fs-5 edit-basic" style="cursor: pointer"></i>
+
+            <!-- Profile Picture & Button -->
+            <div class="me-4 text-center">
+              <img
+                id="profileImage"
+                name="profilePicture"
+                src="<%= candidateData.profilePicture ? '/'+candidateData.profilePicture : '/assets/img/no-image.png' %>"
+                alt="Profile Picture"
+                class="rounded-circle border"
+                style="width: 120px; height: 120px; object-fit: cover"
+              />
+              <div class="mt-2">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadProfilePicModal">
+                  <i class="bi bi-camera-fill me-1"></i>Change Photo
+                </button>
+              </div>
+            </div>
+
+            <!-- Profile Info -->
+            <div class="flex-grow-1">
+              <h4 id="name-view"><%= candidateData.name %></h4>
+              
+
+              <!-- Multi-column layout -->
+              <div class="row">
+                <div class="col-md-6 mb-2">
+                  <i class="bi bi-envelope-fill me-1 text-secondary"></i>
+                  <strong>Email:</strong> <span id="email-view"><%= candidateData.email %></span>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <i class="bi bi-calendar-event-fill me-1 text-secondary"></i>
+                  <strong>DOB:</strong>
+                  <span id="dob-view">
+                    <%= candidateData.profile?.dob ? new Date(candidateData.profile.dob).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year:
+                    "numeric", }) : '' %>
+                  </span>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <i class="bi bi-telephone-fill me-1 text-secondary"></i>
+                  <strong>Phone:</strong>
+                  <span id="phone-view"><%= candidateData.profile?.phone || '' %></span>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <i class="bi bi-geo-alt-fill me-1 text-secondary"></i>
+                  <strong>Address:</strong>
+                  <span id="address-view"><%= candidateData.profile?.address || '' %></span>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <i class="bi bi-briefcase-fill me-1 text-secondary"></i>
+                  <strong>Work Status:</strong>
+                  <span id="workstatus-view"><%= candidateData.profile?.workstatus || '' %></span>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <i class="fas fa-rupee-sign me-1 text-secondary"></i>
+                  <strong>Current Salary:</strong>
+                  <span id="salary-view"><%= candidateData.profile?.currentSalary || '' %></span>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <i class="bi bi-hourglass-split me-1 text-secondary"></i>
+                  <strong>Available to Join:</strong>
+                  <span id="availability-view"><%= candidateData.profile?.availabiltyToJoin + ' Days'  || '' %></span>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <i class="fas fa-history me-1 text-secondary"></i>
+                  <strong>Total Experience:</strong>
+                  <span id="total-experience-view">
+                    <%= candidateData.profile?.totalExperience ? `${candidateData.profile.totalExperience.years} year${candidateData.profile.totalExperience.years
+                    !== 1 ? 's' : ''} ${candidateData.profile.totalExperience.months} month${candidateData.profile.totalExperience.months !== 1 ? 's' : ''}` :
+                    '0 months' %>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+         <div class="card mb-3">
+          <div class="card-body">
+            <h5>
+              Resume
+              <i class="bi bi-upload float-end" data-bs-toggle="modal" data-bs-target="#uploadResumeModal"></i>
+            </h5>
+            <p>
+              Resume uploaded:
+              <span id="resume-view">
+                <% if (candidateData.profile?.resume?.path) { %>
+                <a href="/<%= candidateData.profile.resume.path %>" class="btn btn-ouline-secondary" target="_blank">
+                  <%= candidateData.profile.resume.originalName || 'Download Resume' %>
+                </a>
+                <% } else { %> No resume uploaded. <% } %>
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Profile Headline -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5>
+              Profile Summary
+              <i class="bi bi-pencil-square float-end profile-summary"></i>
+            </h5>
+            <p id="profileSummary-view"><%=candidateData?.profile?.profileSummary? candidateData?.profile?.profileSummary :'' %></p>
+          </div>
+        </div>
+
+        <!-- Skills -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5>
+              Key Skills
+              <i class="bi bi-pencil-square float-end edit-skill"></i>
+            </h5>
+            <p id="skills-view">
+              <% if (candidateData.profile?.skills && candidateData.profile.skills.length > 0) { %> <%= candidateData.profile.skills.map(skill =>
+              skill.name).join(', ') %> <% } else { %>
+              <span class="text-muted">No skills added yet</span>
+              <% } %>
+            </p>
+          </div>
+        </div>
+
+        <!-- Experience -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5>
+              Work Experience
+              <i class="bi bi-plus-square float-end add-workexperience"></i>
+            </h5>
+            <div id="workExperience-view">
+              <% if(candidateData.profile.workExperience.length>0){ for(let exp of candidateData.profile.workExperience){ %>
+              <div class="mb-4 border-bottom pb-2" id="workExp-<%=exp._id %>">
+                <div class="d-flex align-items-center mb-1">
+                  <h6 class="mb-0 fw-bolder me-2"><%=exp.jobTitle %></h6>
+                  <button type="submit" class="btn btn-sm btn-outline-secondary p-0 delete-workExperience" data-id="<%=exp._id %>">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+                <div class="fw-bold"><%= exp.companyName %></div>
+                <div class="text-muted small">
+                  <%=new Date(exp.joiningDate).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric", })%> - <%=
+                  exp.currentEmployment?'Present':new Date(exp.workTillDate).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year:
+                  "numeric", }) %>
+                </div>
+                <% if( exp.skillsUsed && exp.skillsUsed.length>0){ %>
+                <div>
+                  <strong>Skills:</strong>
+                  <%= exp.skillsUsed.map((skill)=>skill.name).join(', ') %>
+                </div>
+                <% } %>
+
+                <div><%=exp.jobProfile?exp.jobProfile:'' %></div>
+              </div>
+              <% } } %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Education -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5>
+              Education
+              <i class="bi bi-plus-square float-end education-add"></i>
+            </h5>
+            <div id="education-view">
+              <% if (candidateData && candidateData.profile && Array.isArray(candidateData.profile.education)) { const levelOrder = ['Post Graduation',
+              'Graduation', 'Twelfth', 'Tenth']; levelOrder.forEach(level => { const levelEntries = candidateData.profile.education.filter(e => e.level
+              === level); levelEntries.forEach(entry => { %>
+              <div class="mb-4 border-bottom pb-2" id="edu-<%=entry._id %>">
+                <div class="d-flex align-items-center mb-1">
+                  <h6 class="mb-0 fw-bold me-2">
+                    <% if (entry.level === 'Tenth') { %> Class X <% } else if (entry.level === 'Twelfth') { %> Class XII <% } else { %> <%=
+                    entry.level %> <% } %>
+                  </h6>
+
+                  <button type="submit" class="btn btn-sm btn-outline-secondary p-0 delete-education" data-id="<%=entry._id %>">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+
+                <% if (entry.course || entry.specialization) { %>
+                <div class="fw-bolder"><%= entry.course %> in <%= entry.specialization %></div>
+                <% } %> <% if (entry.boardOrUniversity) { %>
+                <div class="fw-bolder small"><%= entry.boardOrUniversity %></div>
+                <% } %> <% if (entry.durationFrom && entry.durationTo) { %>
+                <div class="text-muted small"><%= entry.durationFrom %> - <%= entry.durationTo %> | <%= entry.marksPercentage %>%</div>
+                <% } else if (entry.passingOutYear) { %>
+                <div class="text-muted small"><%= entry.passingOutYear %> | <%= entry.marksPercentage %>%</div>
+                <% } %>
+              </div>
+              <% }) }) }%>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title d-flex justify-content-between align-items-center">
+      Projects
+      <i class="bi bi-plus-square add-project" role="button"></i>
+    </h5>
+    <div id="projects-view">
+    
+       <% if(candidateData?.profile?.projects && candidateData?.profile?.projects.length>0){ 
+        candidateData?.profile?.projects.forEach((project)=>{
+        %>
+      <div class="mb-3 pb-3 border-bottom">
+        <div class="d-flex justify-content-between align-items-start mb-1"  id="project-<%=project._id%>">
+          <div>
+            <div class="d-flex align-items-center mb-1">
+            <h6  class="mb-0 fw-bolder me-2"><%=project.title%></h6>
+              <button type="submit" class="btn btn-sm btn-outline-secondary p-0 delete-project" data-id="<%=project._id%>">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                  </div>
+              <% if(project.description){ %>
+              <p class="mb-1 text-muted"><%=project.description%></p>
+              <% } %>
+                <% if(project.link){ %>  
+              <a href="<%=project.link%>" target="_blank" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-box-arrow-up-right me-1"></i>View Project
+              </a>
+              <% } %>
+          </div>
+        </div>
+      </div>
+
+      <% 
+    })
+    } %>
+    </div>
+  </div>
+</div>
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5>
+              Career Preferences
+              <i class="bi bi-pencil-square float-end edit-preferences"></i>
+            </h5>
+            <div>
+              <strong>Industry:</strong>
+              <span id="industry-view"><%=candidateData.profile?.preferredIndustry? candidateData.profile?.preferredIndustry.name:'' %></span>
+            </div>
+            <div>
+              <strong>Job Category:</strong>
+              <span id="job-category-view"><%=candidateData.profile?.preferredJobCategory? candidateData.profile?.preferredJobCategory.name:'' %></span>
+            </div>
+            <div>
+              <strong>Work Mode:</strong>
+              <span id="work-mode-view">
+                <% if (candidateData.profile?.preferredWorkMode && candidateData.profile.preferredWorkMode.length > 0) { %> <%=
+                candidateData.profile.preferredWorkMode.map(item => item.charAt(0).toUpperCase()+item.slice(1)).join(', ') %> <% } %></span
+              >
+            </div>
+            <div>
+              <strong>Shift:</strong>
+              <span id="shift-view"><%=candidateData.profile?.prefferedShift? candidateData.profile?.prefferedShift:'' %></span>
+            </div>
+            <div>
+              <strong>Preferred Location:</strong>
+              <span id="location-view">
+                <% if (candidateData.profile?.preferredLocations && candidateData.profile.preferredLocations.length > 0) { %> <%=
+                candidateData.profile.preferredLocations.map(item => item.name).join(', ') %> <% } %>
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- modal -->
+
+      <div class="modal fade" id="uploadProfilePicModal" tabindex="-1">
+        <div class="modal-dialog">
+          <form id="profilePicForm" class="modal-content" enctype="multipart/form-data">
+            <div class="modal-header">
+              <h5>Update Profile Picture</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <input type="file" name="profilePicture" class="form-control" accept="image/*" required />
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">Upload</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Basic detail modal -->
+
+      <div class="modal fade" id="editBasicModal" tabindex="-1">
+        <div class="modal-dialog">
+          <form id="basicDetailsForm" class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Edit Basic Details</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+              <div class="mb-2">
+                <label for="name" class="form-label required">Name</label>
+                <input type="text" name="name" class="form-control" />
+                <div class="text-danger" data-error="name"></div>
+              </div>
+
+              <div class="mb-2">
+                <label for="dob" class="form-label required">Date of Birth</label>
+                <input type="date" name="dob" class="form-control" />
+                <div class="text-danger" data-error="dob"></div>
+              </div>
+
+              <div class="mb-2">
+                <label for="phone" class="form-label required">Phone Number</label>
+                <input type="text" name="phone" class="form-control" />
+                <div class="text-danger" data-error="phone"></div>
+              </div>
+
+              <div class="mb-2">
+                <label for="address" class="form-label required">Address</label>
+                <textarea name="address" class="form-control" rows="2"></textarea>
+                <div class="text-danger" data-error="address"></div>
+              </div>
+
+              <div class="mb-2">
+                <label for="gender" class="form-label required">Gender</label>
+                <select name="gender" class="form-control">
+                  <option disabled value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label d-block required">Work Status</label>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="workstatus" value="fresher" id="statusFresher" />
+                  <label class="form-check-label" for="statusFresher">Fresher</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="workstatus" value="experienced" id="statusExperienced" />
+                  <label class="form-check-label" for="statusExperienced">Experienced</label>
+                </div>
+                <div class="text-danger" data-error="workStatus"></div>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label">Total Experience</label>
+                <div class="row g-2">
+                  <div class="col">
+                    <select name="experienceYears" class="form-select">
+                      <% for (let i = 0; i <= 15; i++) { %>
+                      <option value="<%= i %>"><%= i %> years</option>
+                      <% } %>
+                      <option value="16">15+ years</option>
+                    </select>
+                  </div>
+                  <div class="col">
+                    <select name="experienceMonths" class="form-select">
+                      <% for (let i = 0; i <= 11; i++) { %>
+                      <option value="<%= i %>"><%= i %> months</option>
+                      <% } %>
+                    </select>
+                  </div>
+                </div>
+                <div class="text-danger" data-error="totlExperience"></div>
+              </div>
+
+              <div class="mb-2">
+                <label for="currentSalary" class="form-label">Current Salary(LPA)</label>
+                <input type="number" name="currentSalary" class="form-control" />
+                <div class="text-danger" data-error="currentSalary"></div>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label d-block required">Availability to Join</label>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="availabilityToJoin" value="15" id="join15" />
+                  <label class="form-check-label" for="join15">15 Days</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="availabilityToJoin" value="30" id="join30" />
+                  <label class="form-check-label" for="join30">30 Days</label>
+                </div>
+              </div>
+              <div class="text-danger" data-error="availabilityToJoin"></div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">Save</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Headline Modal -->
+      <div class="modal fade" id="editProfileSummaryModal" tabindex="-1">
+        <div class="modal-dialog">
+          <form id="profileSummaryForm" class="modal-content">
+            <div class="modal-header">
+              <h5>Edit Profile Summary</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <textarea name="profileSummary" class="form-control" rows="3"></textarea>
+              <div class="text-danger" data-error="profileSummary"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary">Save</button></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Skills Modal -->
+      <div class="modal fade" id="editSkillsModal" tabindex="-1">
+        <div class="modal-dialog">
+          <form id="skillsForm" class="modal-content">
+            <div class="modal-header">
+              <h5>Edit Skills</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <!-- Selected skills appear here -->
+              <div id="selected-skills" class="mb-3"></div>
+
+              <!-- Input for typing skill -->
+              <input type="text" id="skillInput" class="form-control" placeholder="Start typing a skill..." autocomplete="off" />
+
+              <!-- Skill suggestions list -->
+              <div id="skill-suggestions" class="list-group mt-2"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary">Save</button></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Experience Modal -->
+      <div class="modal fade" id="addExperienceModal" tabindex="-1">
+        <div class="modal-dialog">
+          <form id="addWorkExperienceForm" class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addWorkExperienceModalLabel">Add Work Experience</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label required">Current Company?</label><br />
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="currentEmployment" id="currentYes" value="true" checked />
+                  <label class="form-check-label" for="currentYes">Yes</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="currentEmployment" id="currentNo" value="false" />
+                  <label class="form-check-label" for="currentNo">No</label>
+                </div>
+                <div class="text-danger" data-error="currentEmployment"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="companyName" class="form-label required">Company Name</label>
+                <input type="text" class="form-control" id="companyName" name="companyName" />
+                <div class="text-danger" data-error="companyName"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="jobTitle" class="form-label required">Job Title</label>
+                <input type="text" class="form-control" id="jobTitle" name="jobTitle" />
+                <div class="text-danger" data-error="jobTitle"></div>
+              </div>
+              <div class="row mb-3">
+                <div class="col">
+                  <label for="joiningDate" class="form-label required">Joining Date</label>
+                  <input type="date" class="form-control" id="joiningDate" name="joiningDate" />
+                  <div class="text-danger" data-error="joiningDate"></div>
+                </div>
+                <div class="col">
+                  <label for="workTillDate" class="form-label">Work Till Date</label>
+                  <input type="date" class="form-control" id="workTillDate" name="workTillDate" disabled />
+                  <div class="text-danger" data-error="workTillDate"></div>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="used-skills" class="form-label required">Used Skills</label>
+                <div id="used-skills" class="mb-3"></div>
+
+                <input type="text" id="usedSkillInput" class="form-control" placeholder="Start typing a skill..." autocomplete="off" />
+
+                <div id="used-skill-suggestions" class="list-group mt-2"></div>
+                <div class="text-danger" data-error="skillsUsed"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="jobProfile" class="form-label">Job Profile / Description</label>
+                <textarea class="form-control" id="jobProfile" name="jobProfile" rows="3"></textarea>
+                <div class="text-danger" data-error="jobProfile"></div>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <span id="work-exp-msg" class="text-danger me-auto d-none"></span>
+              <button type="submit" class="btn btn-primary">Save</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Education Modal -->
+      <div class="modal fade" id="addEducationModal" tabindex="-1">
+        <div class="modal-dialog">
+          <form id="educationForm" class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="educationModalLabel">Add Education</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div id="education-msg" class="alert alert-danger d-none" role="alert"></div>
+              <div class="mb-3">
+                <label for="level" class="form-label required">Education Level</label>
+                <select class="form-select" id="level" name="level">
+                  <option value="">Select</option>
+                  <option value="Tenth">10th</option>
+                  <option value="Twelfth">12th</option>
+                  <option value="Graduation">Graduation</option>
+                  <option value="Post Graduation">Post Graduation</option>
+                </select>
+                <div class="text-danger" data-error="level"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="boardOrUniversity" class="form-label required">Board/University</label>
+                <input type="text" class="form-control" name="boardOrUniversity" />
+                <div class="text-danger" data-error="boardOrUniversity"></div>
+              </div>
+
+              <div class="mb-3 d-none" id="course-group">
+                <label for="course" class="form-label required">Course</label>
+                <select class="form-select" id="course" name="course">
+                  <option value="">Select Course</option>
+                </select>
+                <div class="text-danger" data-error="course"></div>
+              </div>
+
+              <div class="mb-3 d-none" id="specialization-group">
+                <label for="specialization" class="form-label required">Specialization</label>
+                <select class="form-select" id="specialization" name="specialization">
+                  <option value="">Select Specialization</option>
+                </select>
+                <div class="text-danger" data-error="specialization"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="marksPercentage" class="form-label required">Marks Percentage</label>
+                <input type="number" class="form-control" name="marksPercentage" step="0.1" />
+                <div class="text-danger" data-error="marksPercentage"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="passingOutYear" class="form-label">Passing Out Year</label>
+                <select class="form-select" id="passingOutYear" name="passingOutYear" disabled></select>
+                <div class="text-danger" data-error="passingOutYear"></div>
+              </div>
+
+              <div class="row">
+                <div class="col">
+                  <label for="durationFrom" class="form-label">From</label>
+                  <select class="form-select" id="durationFrom" name="durationFrom" disabled></select>
+                </div>
+                <div class="col">
+                  <label for="durationTo" class="form-label">To</label>
+                  <select class="form-select" id="durationTo" name="durationTo" disabled></select>
+                </div>
+                <div class="text-danger" data-error="course-duration"></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">Save</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+  <div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="projectForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="projectModalLabel">Add Project</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="projectId" id="projectId" />
+
+          <div class="mb-3">
+            <label for="projectTitle" class="form-label">Title <span class="text-danger">*</span></label>
+            <input type="text" class="form-control required" id="projectTitle" name="projectTitle" />
+            <div class="text-danger" data-error="title"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="projectDescription" class="form-label">Description</label>
+            <textarea class="form-control" id="projectDescription" name="PojectDescription" rows="3"></textarea>
+            <div class="text-danger" data-error="description"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="projectLink" class="form-label">Link</label>
+            <input type="url" class="form-control" id="projectLink" name="projectLink" />
+            <div class="text-danger" data-error="link"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+      <!-- Career Preferences Modal -->
+      <div class="modal fade" id="editCareerPreferenceModal" tabindex="-1">
+        <div class="modal-dialog">
+          <form id="careerForm" class="modal-content">
+            <div class="modal-header">
+              <h5>Edit Career Preferences</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <!-- Industry -->
+              <div class="mb-3">
+                <label for="preferredIndustry" class="form-label required">Industry</label>
+                <select name="preferredIndustry" id="preferredIndustry" class="form-control mb-2">
+                  <option value="">select</option>
+                  <% industriesToselect.forEach((item)=>{ %>
+                  <option value="<%=item._id %>"><%=item.name %></option>
+                  <% }) %>
+                </select>
+                <div class="text-danger" data-error="preferredIndustry"></div>
+              </div>
+
+              <!-- Job Category -->
+              <div class="mb-3">
+                <label for="preferredJobCategory" class="form-label required">Job Category</label>
+                <select name="preferredJobCategory" id="preferredJobCategory" class="form-control mb-2">
+                  <option value="">select</option>
+                  <% jobCategoriesToselect.forEach((item)=>{ %>
+                  <option value="<%=item._id %>"><%=item.name %></option>
+                  <% }) %>
+                </select>
+                <div class="text-danger" data-error="preferredJobCategory"></div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label required">Preferred Work Mode</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="preferredWorkMode" value="work from office" id="modeOffice" />
+                  <label class="form-check-label" for="modeOffice">Work from Office</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="preferredWorkMode" value="work from home" id="modeHome" />
+                  <label class="form-check-label" for="modeHome">Work from Home</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="preferredWorkMode" value="remote" id="modeRemote" />
+                  <label class="form-check-label" for="modeRemote">Remote</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="preferredWorkMode" value="hybrid" id="modeHybrid" />
+                  <label class="form-check-label" for="modeHybrid">Hybrid</label>
+                </div>
+                <div class="text-danger" data-error="preferredWorkMode"></div>
+              </div>
+
+              <!-- Preferred Work Shift -->
+              <div class="mb-3">
+                <label class="form-label required">Preferred Work Shift</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="prefferedShift" id="shiftDay" value="day" />
+                  <label class="form-check-label" for="shiftDay">Day</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="prefferedShift" id="shiftNight" value="night" />
+                  <label class="form-check-label" for="shiftNight">Night</label>
+                </div>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="radio" name="prefferedShift" id="shiftFlexible" value="flexible" />
+                  <label class="form-check-label" for="shiftFlexible">Flexible</label>
+                </div>
+                <div class="text-danger" data-error="prefferedShift"></div>
+              </div>
+
+              <!-- Preferred Job Location -->
+              <div class="mb-3">
+                <label for="preferredLocations" class="form-label required">Preferred Job Location</label>
+                <div id="selected-locations" class="mb-3"></div>
+
+                <!-- Input for typing skill -->
+                <input type="text" id="locationInput" class="form-control" placeholder="write location" autocomplete="off" />
+                <div id="location-suggestions" class="list-group mt-2"></div>
+                <div class="text-danger" data-error="preferredLocations"></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-primary" type="submit">Save</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+
+      <!-- Resume Upload Modal -->
+      <div class="modal fade" id="uploadResumeModal" tabindex="-1">
+        <div class="modal-dialog">
+          <form id="resumeForm" class="modal-content" enctype="multipart/form-data">
+            <div class="modal-header">
+              <h5>Upload Resume</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <input type="file" name="resume" class="form-control" accept=".pdf" required />
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary">Upload</button></div>
+          </form>
+        </div>
+      </div>
+    </main>
+    <%- include('./layouts/footer') %> <%- include('./layouts/footer-scripts') %>
+    <script>
+      $(document).ready(function () {
+        $(".edit-basic").on("click", function () {
+          $("[data-error]").text("");
+          $.ajax({
+            url: "/candidate/profile/basic-details",
+            type: "GET",
+            success: function (response) {
+              // console.log(response);
+              const candidate = response.data;
+              $('input[name="name"]').val(candidate.name);
+              $('input[name="dob"]').val(candidate.profile?.dob ? new Date(candidate.profile.dob).toISOString().split("T")[0] : "");
+              $('input[name="phone"]').val(candidate.profile?.phone ? candidate.profile.phone : "");
+              $('textarea[name="address"]').val(candidate.profile?.address ? candidate.profile.address : "");
+              $('input[name="gender"]').val(candidate.profile?.gender ? candidate.profile.gender : "");
+              $(`input[name="workstatus"][value="${candidate.profile?.workstatus || ""}"]`).prop("checked", true);
+              $('select[name="experienceYears"]').val(candidate.profile?.totalExperience?.years ?? 0);
+              $('select[name="experienceMonths"]').val(candidate.profile?.totalExperience?.months ?? 0);
+              $('input[name="currentSalary"]').val(candidate.profile?.currentSalary || "");
+              $(`input[name="availabilityToJoin"][value="${candidate.profile?.availabiltyToJoin || ""}"]`).prop("checked", true);
+
+              $("#editBasicModal").modal("show");
+            },
+            error: function (error) {
+              if (handleAuthRedirect(error)) return;
+            },
+          });
+        });
+
+        $('input[name="workstatus"]').change(function () {
+          const selectedStatus = $(this).val();
+
+          if (selectedStatus === "fresher") {
+            $('select[name="experienceYears"]').val("0");
+            $('select[name="experienceMonths"]').val("0");
+            $('input[name="currentSalary"]').val(0);
+
+            $('select[name="experienceYears"]').prop("disabled", true);
+            $('select[name="experienceMonths"]').prop("disabled", true);
+            $('input[name="currentSalary"]').prop("disabled", true);
+          } else {
+            $('select[name="experienceYears"]').prop("disabled", false);
+            $('select[name="experienceMonths"]').prop("disabled", false);
+            $('input[name="currentSalary"]').prop("disabled", false);
+          }
+        });
+
+        $("#basicDetailsForm").on("submit", function (e) {
+          e.preventDefault();
+          const name = $('input[name="name"]').val().trim();
+          const dob = $('input[name="dob"]').val();
+          const phone = $('input[name="phone"]').val();
+          const address = $('textarea[name="address"]').val();
+          const gender = $('select[name="gender"]').val();
+          const workstatus = $('input[name="workstatus"]:checked').val();
+          const exprerienceYears = parseInt($('select[name="experienceYears"]').val()) || 0;
+          const exprerienceMonths = parseInt($('select[name="experienceMonths"]').val()) || 0;
+          const currentSalary = parseFloat($('input[name="currentSalary"]').val()) || 0;
+          const availabilityToJoin = parseInt($('input[name="availabilityToJoin"]:checked').val());
+
+          let hasError = false;
+          $("[data-error]").text("");
+          if (!name) {
+            $('[data-error="name"]').text("Name is required");
+            hasError = true;
+          }
+          if (!phone) {
+            $('[data-error="phone"]').text("Phone is required");
+            hasError = true;
+          }
+          if (!address) {
+            $('[data-error="address"]').text("Address is required");
+            hasError = true;
+          }
+
+          if (address.length > 100) {
+            $('[data-error="address"]').text("Address length should be less than 100");
+            hasError = true;
+          }
+
+          if (!dob) {
+            $('[data-error="dob"]').text("Date of birth is required");
+            hasError = true;
+          }
+          if (!workstatus) {
+            $('[data-error="workstatus"]').text("Work status is required");
+            hasError = true;
+          }
+
+          if (!availabilityToJoin) {
+            $('[data-error="availabilityToJoin"]').text("Availability to join is required");
+            hasError = true;
+          }
+
+          if (workstatus === "experienced") {
+            if (!exprerienceYears && !exprerienceMonths) {
+              $('[data-error="totlExperience"]').text("Total Experience is required for experienced");
+              hasError = true;
+            }
+            if (!currentSalary) {
+              $('[data-error="currentSalary"]').text("Current Salary is required for experienced");
+              hasError = true;
+            }
+          }
+
+          if (hasError) return;
+
+          const formData = {
+            name,
+            dob,
+            phone,
+            address,
+            gender,
+            workstatus,
+            totalExperience: {
+              years: exprerienceYears,
+              months: exprerienceMonths,
+            },
+            currentSalary,
+            availabilityToJoin,
+          };
+
+          // console.log(formData);
+
+          $.ajax({
+            url: "/candidate/profile/basic-details/update",
+            type: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            success: function (response) {
+              console.log(response);
+              const candidate = response.data;
+
+              $("#name-view").text(candidate.name);
+              $("#dob-view").text(candidate.profile?.dob ? dayjs(candidate.profile.dob).format("DD-MM-YYYY") : "");
+              $("#phone-view").text(candidate.profile?.phone || "");
+              $("#address-view").text(candidate.profile?.address || "");
+              $("#workstatus-view").text(candidate.profile?.workstatus || "");
+              $("#salary-view").text(candidate.profile?.currentSalary || "");
+              $("#availability-view").text(`${candidate.profile?.availabiltyToJoin || ""} days`);
+
+              const years = candidate.profile?.totalExperience?.years || 0;
+              const months = candidate.profile?.totalExperience?.months || 0;
+              $("#total-experience-view").text(`${years} year${years !== 1 ? "s" : ""} ${months} month${months !== 1 ? "s" : ""}`);
+
+              $("small.text-muted").text("Last updated: " + dayjs(candidate.updatedAt).format("DD-MM-YYYY"));
+
+              $("#editBasicModal").modal("hide");
+            },
+            error: function (error) {
+              if (handleAuthRedirect(error)) return;
+              if (error.responseJSON && error.responseJSON.errors) {
+                const errors = error.responseJSON.errors;
+                for (let field in errors) {
+                  $(`[data-error="${field}"]`).text(errors[field]);
+                }
+              }
+
+              if (error.responseJSON && error.responseJSON.message) {
+                alert(error.responseJSON.message);
+              }
+            },
+          });
+        });
+
+        $("#profilePicForm").on("submit", function (e) {
+          e.preventDefault();
+          const formData = new FormData(this);
+
+          $.ajax({
+            url: "/candidate/profile/profile-image/update",
+            type: "PUT",
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (response) {
+              // console.log(response);
+
+              $("#profileImage").attr("src", "/" + response.data.profilePicture);
+              $("#uploadProfilePicModal").modal("hide");
+            },
+            error: function (error) {
+              if (handleAuthRedirect(error)) return;
+              alert("An error occurred. Please try again.");
+            },
+          });
+        });
+
+        $(".profile-summary").on("click", function () {
+          $("[data-error]").text("");
+          $.ajax({
+            url: "/candidate/profile/profile-summary",
+            type: "GET",
+            success: function (response) {
+              console.log(response);
+              const summary = response.data;
+
+              $('textarea[name="profileSummary"]').val(summary);
+
+              $("#editProfileSummaryModal").modal("show");
+            },
+            error: function (error) {
+              if (handleAuthRedirect(error)) return;
+            },
+          });
+        });
+
+        $("#profileSummaryForm").on("submit", function (e) {
+          e.preventDefault();
+          const profileSummary = $('textarea[name="profileSummary"]').val();
+
+          if (profileSummary) {
+            if (profileSummary.length > 100) {
+              $('[data-error="profileSummary"]').text("Profile summary should not exceed 100 characters limit");
+              return;
+            }
+          }
+
+          $.ajax({
+            url: "/candidate/profile/profile-summary/update",
+            type: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify({ profileSummary }),
+
+            success: function (response) {
+              // console.log(response);
+              $("#profileSummary-view").text(response.data.profile.profileSummary);
+              $("#editProfileSummaryModal").modal("hide");
+            },
+            error: function (error) {
+              if (handleAuthRedirect(error)) return;
+              if (error.responseJSON && error.responseJSON.message) {
+                alert(error.responseJSON.message);
+              }
+            },
+          });
+        });
+
+        // ---- skills ---------------
+
+        const selectedSkills = new Map();
+
+        $(".edit-skill").on("click", function () {
+          selectedSkills.clear();
+          $("#selected-skills").empty();
+          $("#skillInput").val("");
+          $("#skill-suggestions").empty();
+
+          $.ajax({
+            url: `/candidate/profile/skills`,
+            method: "GET",
+            success: function (response) {
+              const skills = response.data;
+              skills.forEach((skill) => {
+                selectedSkills.set(skill._id, skill.name);
+              });
+              $("#editSkillsModal").modal("show");
+              updateSelectedSkills();
+            },
+          });
+        });
+
+        $("#skillInput").on("input", function () {
+          const query = $(this).val().trim();
+          $("#skill-suggestions").empty();
+
+          if (query.length < 1) return;
+
+          $.ajax({
+            url: `/skills/search?q=${query}`,
+            method: "GET",
+            success: function (response) {
+              const skills = response.skills;
+              skills.forEach((skill) => {
+                if (!selectedSkills.has(skill._id)) {
+                  const item = $(`
+              <button class="list-group-item list-group-item-action">${skill.name}</button>
+            `);
+                  item.on("click", function () {
+                    selectSkill(skill);
+                  });
+                  $("#skill-suggestions").append(item);
+                }
+              });
+            },
+          });
+        });
+
+        function selectSkill(skill) {
+          if (selectedSkills.has(skill._id)) return;
+
+          selectedSkills.set(skill._id, skill.name);
+          updateSelectedSkills();
+          $("#skillInput").val("");
+          $("#skill-suggestions").empty();
+          console.log(selectedSkills);
+        }
+
+        function removeSkill(skillId) {
+          selectedSkills.delete(skillId);
+          updateSelectedSkills();
+        }
+
+        function updateSelectedSkills() {
+          const container = $("#selected-skills");
+          container.empty();
+
+          selectedSkills.forEach((name, id) => {
+            const badge = $(`
+        <span class="badge bg-primary me-2">
+          ${name}
+          <i class="bi bi-x ms-1" style="cursor:pointer;" data-id="${id}"></i>
+        </span>
+      `);
+            badge.find("i").on("click", function () {
+              const id = $(this).data("id");
+              removeSkill(id);
+            });
+            container.append(badge);
+          });
+        }
+
+        $("#skillsForm").on("submit", function (e) {
+          e.preventDefault();
+          const skillIds = Array.from(selectedSkills.keys());
+
+          $.ajax({
+            url: "/candidate/profile/skills/update",
+            method: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify({ skills: skillIds }),
+            success: function (response) {
+              console.log(response);
+              const skillNames = Array.from(selectedSkills.values()).join(", ");
+              $("#skills-view").text(skillNames);
+              $("#editSkillsModal").modal("hide");
+            },
+            error: function (error) {
+              alert("Failed to update skills");
+            },
+          });
+        });
+
+        // ---- education----
+        function populateYearSelect(selector, startYear = 1970, endOffset = 5) {
+          const currentYear = new Date().getFullYear();
+          const endYear = currentYear + endOffset;
+          const $select = $(selector);
+
+          $select.empty().append(`<option value="">Select Year</option>`);
+          for (let year = startYear; year <= endYear; year++) {
+            $select.append(`<option value="${year}">${year}</option>`);
+          }
+        }
+
+        populateYearSelect("#passingOutYear");
+        populateYearSelect("#durationFrom");
+        populateYearSelect("#durationTo");
+
+        $("#level").on("change", function () {
+          const level = $(this).val();
+          const isGrad = ["Graduation", "Post Graduation"].includes(level);
+          const isSchool = ["Tenth", "Twelfth"].includes(level);
+
+          $("#course").html('<option value="">Select Course</option>');
+          $("#specialization").html('<option value="">Select Specialization</option>');
+          $("#course-group, #specialization-group").toggleClass("d-none", !isGrad);
+
+          // $("#course, #specialization").prop("disabled", !isGrad);
+          $("#passingOutYear").prop("disabled", !isSchool);
+          $("#durationFrom, #durationTo").prop("disabled", !isGrad);
+
+          if (isGrad) {
+            $.get(`/courses/by-educationLevel?level=${level}`, function (response) {
+              if (Array.isArray(response.data)) {
+                response.data.forEach((course) => {
+                  $("#course").append(`<option value="${course._id}">${course.name}</option>`);
+                });
+              }
+            });
+          }
+        });
+
+        $("#course").on("change", function () {
+          const courseId = $(this).val();
+          $("#specialization").html('<option value="">Select Specialization</option>');
+
+          if (courseId) {
+            $("#specialization-group").removeClass("d-none");
+
+            $.get(`/specializations/by-course/${courseId}`, function (response) {
+              console.log(response);
+              if (Array.isArray(response.data)) {
+                response.data.forEach((spec) => {
+                  $("#specialization").append(`<option value="${spec._id}">${spec.name}</option>`);
+                });
+              }
+            });
+          } else {
+            $("#specialization-group").addClass("d-none");
+          }
+        });
+
+        $(".education-add").on("click", function () {
+          $("[data-error]").text("");
+          $("#addEducationModal").modal("show");
+        });
+
+        $("#educationForm").on("submit", function (e) {
+          e.preventDefault();
+
+          const level = $('select[name="level"]').val();
+          const boardOrUniversity = $('input[name="boardOrUniversity"]').val();
+          const course = $('select[name="course"]').val();
+          const specialization = $('select[name="specialization"]').val();
+          const marksPercentage = $('input[name="marksPercentage"]').val();
+          const passingOutYear = $('select[name="passingOutYear"]').val();
+          const durationFrom = $('select[name="durationFrom"]').val();
+          const durationTo = $('select[name="durationTo"]').val();
+
+          let hasError = false;
+          if (!level) {
+            $('[data-error="level"]').text("Education level is required");
+            hasError = true;
+          }
+          if (!boardOrUniversity) {
+            $('[data-error="boardOrUniversity"]').text("Board or University is required");
+            hasError = true;
+          }
+          if (["Graduation", "Post Graduation"].includes(level)) {
+            if (!course) {
+              $('[data-error="course"]').text("Course is required");
+              hasError = true;
+            }
+            if (!specialization) {
+              $('[data-error="specialization"]').text("Specialization is required");
+              hasError = true;
+            }
+            if (!durationFrom || !durationTo) {
+              $('[data-error="course-duration"]').text("Course duration is required");
+              hasError = true;
+            }
+          }
+
+          if (["Tenth", "Twelfth"].includes(level)) {
+            if (!passingOutYear) {
+              $('[data-error="passingOutYear"]').text("passing out year is required");
+              hasError = true;
+            }
+          }
+
+          if (!marksPercentage) {
+            $('[data-error="marksPercentage"]').text("Percentage marks is required");
+            hasError = true;
+          }
+
+          if (hasError) return;
+
+          const formData = {
+            level,
+            boardOrUniversity,
+            course,
+            specialization,
+            marksPercentage,
+            passingOutYear,
+            durationFrom,
+            durationTo,
+          };
+
+          // console.log(formData);
+
+          $.ajax({
+            url: "/candidate/profile/education/add",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            success: function (response) {
+              $("#educationForm")[0].reset();
+
+              const entry = response.data;
+              let levelDisplay = entry.level;
+              if (entry.level === "Tenth") levelDisplay = "Class X";
+              else if (entry.level === "Twelfth") levelDisplay = "Class XII";
+
+              const html = `
+    <div class="mb-4 border-bottom pb-2" data-id="${entry._id}">
+      <div class="d-flex align-items-center mb-1">
+        <h6 class="mb-0 fw-bold me-2">${levelDisplay}</h6>
+        <form method="POST" action="/user/education/delete/${entry._id}">
+          <button type="submit" class="btn btn-sm btn-outline-secondary p-0" title="Delete">
+            <i class="bi bi-trash" style="font-size: 0.85rem;"></i>
+          </button>
+        </form>
+      </div>
+
+      ${entry.course || entry.specialization ? `<div class="fw-bolder">${entry.course} in ${entry.specialization}</div>` : ""}
+
+      ${entry.boardOrUniversity ? `<div class="fw-bolder small">${entry.boardOrUniversity}</div>` : ""}
+
+      ${
+        entry.durationFrom && entry.durationTo
+          ? `<div class="text-muted small">${entry.durationFrom} - ${entry.durationTo} | ${entry.marksPercentage}%</div>`
+          : entry.passingOutYear
+          ? `<div class="text-muted small">${entry.passingOutYear} | ${entry.marksPercentage}%</div>`
+          : ""
+      }
+    </div>
+  `;
+              $("#education-view").append(html);
+              $("#addEducationModal").modal("hide");
+            },
+            error: function (error) {
+              if (handleAuthRedirect(error)) return;
+              const errorResponse = error.responseJSON;
+              if (error.status === 400 && errorResponse && errorResponse.errors) {
+                for (let field in errorResponse.errors) {
+                  $(`[data-error="${field}"]`).text(errorResponse.errors[field]);
+                }
+              } else {
+                alert(errorResponse.message || "Something went wrong.Try again later.");
+              }
+              // if (error.responseJSON && error.responseJSON.message) {
+              //   $("#education-msg").text(error.responseJSON.message).removeClass("d-none");
+              // }
+            },
+          });
+        });
+
+        $(".delete-education").on("click", function () {
+          const conf = confirm("Do you want to dlete this education level?");
+          if (!conf) rerurn;
+
+          const id = $(this).data("id");
+          console.log(id);
+
+          $.ajax({
+            url: `/candidate/profile/education/${id}/delete`,
+            type: "DELETE",
+            success: function (response) {
+              $(`#edu-${id}`).remove();
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        });
+
+        // ---- work experience ---
+        $('input[name="currentEmployment"]').on("change", function () {
+          const isCurrent = $('input[name="currentEmployment"]:checked').val() === "true";
+          $("#workTillDate").prop("disabled", isCurrent);
+        });
+
+        const usedSkills = new Map();
+
+        $("#usedSkillInput").on("input", function () {
+          const query = $(this).val().trim();
+          $("#used-skill-suggestions").empty();
+
+          if (query.length < 1) return;
+
+          $.ajax({
+            url: `/skills/search?q=${query}`,
+            method: "GET",
+            success: function (response) {
+              const skills = response.skills;
+              skills.forEach((skill) => {
+                if (!usedSkills.has(skill._id)) {
+                  const item = $(`
+              <button class="list-group-item list-group-item-action">${skill.name}</button>
+            `);
+                  item.on("click", function () {
+                    selectUsedSkill(skill);
+                  });
+                  $("#used-skill-suggestions").append(item);
+                }
+              });
+            },
+          });
+        });
+
+        function selectUsedSkill(skill) {
+          if (usedSkills.has(skill._id)) return;
+
+          usedSkills.set(skill._id, skill.name);
+          updateUsedSelectedSkills();
+          $("#usedSkillInput").val("");
+          $("#used-skill-suggestions").empty();
+          console.log(usedSkills);
+        }
+
+        function removeUsedSkill(skillId) {
+          usedSkills.delete(skillId);
+          updateUsedSelectedSkills();
+        }
+
+        function updateUsedSelectedSkills() {
+          const container = $("#used-skills");
+          container.empty();
+
+          usedSkills.forEach((name, id) => {
+            const badge = $(`
+        <span class="badge bg-secondary me-2">
+          ${name}
+          <i class="bi bi-x ms-1" style="cursor:pointer;" data-id="${id}"></i>
+        </span>
+      `);
+            badge.find("i").on("click", function () {
+              const id = $(this).data("id");
+              removeUsedSkill(id);
+            });
+            container.append(badge);
+          });
+        }
+
+        $(".add-workexperience").on("click", function () {
+          usedSkills.clear();
+          $("#selected-skills").empty();
+          $("#usedSkillInput").val("");
+          $("#used-skill-suggestions").empty();
+          $("[data-error]").text("");
+          $("#addExperienceModal").modal("show");
+        });
+
+        $("#addWorkExperienceForm").on("submit", function (e) {
+          e.preventDefault();
+
+          const currentEmployment = $('input[name="currentEmployment"]:checked').val();
+          const companyName = $('input[name="companyName"]').val().trim();
+          const jobTitle = $('input[name="jobTitle"]').val().trim();
+          const joiningDate = $('input[name="joiningDate"]').val();
+          const workTillDate = $('input[name="workTillDate"]').val();
+          const jobProfile = $('textarea[name="jobProfile"]').val().trim();
+          const usedSkillIds = Array.from(usedSkills.keys());
+
+          let hasError = false;
+
+          if (!currentEmployment) {
+            $('[data-error="currentEmployment"]').text("Current emplyment status is required");
+            hasError = true;
+          }
+          if (!companyName) {
+            $('[data-error="companyName"]').text("Company name is required");
+            hasError = true;
+          }
+          if (!jobTitle) {
+            $('[data-error="jobTitle"]').text("Job title is required");
+            hasError = true;
+          }
+          if (!joiningDate) {
+            $('[data-error="joiningDate"]').text("Joining date is required");
+            hasError = true;
+          }
+
+          if (currentEmployment === "false") {
+            if (!workTillDate) {
+              $('[data-error="workTillDate"]').text("Work till date is required");
+              hasError = true;
+            }
+          }
+
+          if (usedSkillIds.length === 0) {
+            $('[data-error="skillsUsed"]').text("Used skills are required");
+            hasError = true;
+          }
+          if (jobProfile.length > 200) {
+            $('[data-error="jobProfile"]').text("Job profile exceeds the 200 character limit");
+            hasError = true;
+          }
+
+          if (hasError) return;
+
+          const formData = {
+            currentEmployment,
+            companyName,
+            jobTitle,
+            joiningDate,
+            workTillDate,
+            usedSkillIds,
+            jobProfile,
+          };
+
+          console.log(formData);
+
+          $.ajax({
+            url: "/candidate/profile/workExperience/add",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            success: function (response) {
+              $("#addWorkExperienceForm")[0].reset();
+
+              if (response.status) {
+                console.log(response);
+                const exp = response.data;
+                let html = `
+                <div class="mb-4 border-bottom pb-2" id="workExp-${exp._id}">
+                  <div class="d-flex align-items-center mb-1">
+                    <h6 class="mb-0 fw-bolder me-2">${exp.jobTitle}</h6>
+                    <button
+                    type="submit"
+                    class="btn btn-sm btn-outline-secondary p-0 delete-workExperience"
+                    data-id="${exp._id}"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                  </div>
+                   <div class="fw-bold">${exp.companyName}</div>
+                   <div class="text-muted small">
+                    ${new Date(exp.joiningDate).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })} - 
+                    ${
+                      exp.currentEmployment
+                        ? "Present"
+                        : new Date(exp.workTillDate).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })
+                    }
+                    </div>
+                    <div>
+                    ${exp.jobProfile ? exp.jobProfile : ""}
+                    </div>
+                </div>
+                `;
+                $("#workExperience-view").append(html);
+              }
+              $("#addExperienceModal").modal("hide");
+            },
+            error: function (error) {
+              if (handleAuthRedirect(error)) return;
+              const errorResponse = error.responseJSON;
+              if (error.status === 400 && errorResponse && errorResponse.errors) {
+                for (let field in errorResponse.errors) {
+                  $(`[data-error="${field}"]`).text(errorResponse.errors[field]);
+                }
+              } else {
+                alert(errorResponse.message || "Something went wrong.Try again later.");
+              }
+            },
+          });
+        });
+
+        $(document).on("click",".delete-workExperience", function () {
+          const conf = confirm("Do you want to dlete this work Experience?");
+          if (!conf) rerurn;
+
+          const id = $(this).data("id");
+          // console.log(id);
+
+          $.ajax({
+            url: `/candidate/profile/workExperience/${id}/delete`,
+            type: "DELETE",
+            success: function (response) {
+              $(`#workExp-${id}`).remove();
+            },
+            error: function (xhr) {
+             if (handleAuthRedirect(xhr)) return;
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        });
+
+        // ---- career preference ---
+
+        const selectedLocations = new Map();
+
+        $(".edit-preferences").on("click", function () {
+          selectedLocations.clear();
+          $("#selected-locations").empty();
+          $("#locationInput").val("");
+          $("#location-suggestions").empty();
+          $("[data-error]").text("");
+
+          // $.ajax({
+          //   url: "/industries/all",
+          //   type: "GET",
+          //   success: function (response) {
+          //     const industries = response.data;
+          //     console.log(industries);
+          //     let html = "<option value=''>Select</option>";
+          //     industries.forEach((item) => {
+          //       html += `<option value='${item._id}'>${item.name}</option>`;
+          //     });
+
+          //     $("#preferredIndustry").html(html);
+          //   },
+          //   error: function (erroe) {
+          //     if (handleAuthRedirect(error)) return;
+          //     alert("Something went worong.Try again later.");
+          //   },
+          // });
+
+          $.ajax({
+            url: "/candidate/profile/career-preferences",
+            type: "GET",
+            success: function (response) {
+              console.log(response.data);
+              const preferences = response.data;
+              preferences.preferredLocations.forEach((skill) => {
+                selectedLocations.set(skill._id, skill.name);
+              });
+              updateSelectedLocations();
+
+              if (preferences.preferredIndustry) {
+                $('select[name="preferredIndustry"]').val(preferences.preferredIndustry._id);
+              }
+              if (preferences.preferredJobCategory) {
+                $('select[name="preferredJobCategory"]').val(preferences.preferredJobCategory._id);
+              }
+
+              if (Array.isArray(preferences.preferredWorkMode)) {
+                $('input[name="preferredWorkMode"]').prop("checked", false);
+                preferences.preferredWorkMode.forEach((mode) => {
+                  $(`input[name="preferredWorkMode"][value="${mode}"]`).prop("checked", true);
+                });
+              }
+
+              if (preferences.prefferedShift) {
+                $(`input[name="prefferedShift"][value="${preferences.prefferedShift}"]`).prop("checked", true);
+              }
+            },
+            error: function (erroe) {
+              if (handleAuthRedirect(error)) return;
+              alert("Something went worong.Try again later.");
+            },
+          });
+
+          $("#editCareerPreferenceModal").modal("show");
+        });
+
+        $("#locationInput").on("input", function () {
+          const query = $(this).val().trim();
+          $("#location-suggestions").empty();
+
+          if (query.length < 1) return;
+
+          $.ajax({
+            url: `/locations/search?q=${query}`,
+            method: "GET",
+            success: function (response) {
+              console.log(response);
+              const locations = response.locations;
+              locations.forEach((location) => {
+                if (!selectedLocations.has(location._id)) {
+                  const item = $(`
+              <button class="list-group-item list-group-item-action">${location.name}</button>
+            `);
+                  item.on("click", function () {
+                    selectLocation(location);
+                  });
+                  $("#location-suggestions").append(item);
+                }
+              });
+            },
+          });
+        });
+
+        function selectLocation(location) {
+          if (selectedLocations.has(location._id)) return;
+
+          selectedLocations.set(location._id, location.name);
+          updateSelectedLocations();
+          $("#locationInput").val("");
+          $("#location-suggestions").empty();
+        }
+
+        function removeLocation(locationId) {
+          selectedLocations.delete(locationId);
+          updateSelectedLocations();
+        }
+
+        function updateSelectedLocations() {
+          const container = $("#selected-locations");
+          container.empty();
+          console.log(selectedLocations);
+          selectedLocations.forEach((name, id) => {
+            const badge = $(`
+        <span class="badge bg-secondary me-2">
+          ${name}
+          <i class="bi bi-x ms-1" style="cursor:pointer;" data-id="${id}"></i>
+        </span>
+      `);
+            badge.find("i").on("click", function () {
+              const id = $(this).data("id");
+              removeLocation(id);
+            });
+            container.append(badge);
+          });
+        }
+
+        $("#careerForm").on("submit", function (e) {
+          e.preventDefault();
+
+          const preferredIndustry = $('select[name="preferredIndustry"]').val();
+          const preferredJobCategory = $('select[name="preferredJobCategory"]').val();
+          const prefferedShift = $('input[name="prefferedShift"]:checked').val();
+
+          const preferredLocations = Array.from(selectedLocations.keys());
+
+          const preferredWorkMode = [];
+          $('input[name="preferredWorkMode"]:checked').each(function () {
+            preferredWorkMode.push($(this).val());
+          });
+
+          // console.log(preferredWorkMode);
+
+          let hasError = false;
+
+          if (!preferredIndustry) {
+            $('[data-error="preferredIndustry"]').text("Preferred Industry is required");
+            hasError = true;
+          }
+          if (!preferredJobCategory) {
+            $('[data-error="preferredJobCategory"]').text("Preferred job category is required");
+            hasError = true;
+          }
+
+          if (preferredWorkMode.length === 0) {
+            $('[data-error="preferredWorkMode"]').text("Preferred Work mode is required");
+            hasError = true;
+          }
+          if (preferredLocations.length === 0) {
+            $('[data-error="preferredLocations"]').text("Preferred locations are required");
+            hasError = true;
+          }
+
+          if (!prefferedShift) {
+            $('[data-error="prefferedShift"]').text("Preferred Work shift is required");
+            hasError = true;
+          }
+
+          if (hasError) return;
+
+          const formData = {
+            preferredIndustry,
+            preferredJobCategory,
+            preferredWorkMode,
+            prefferedShift,
+            preferredLocations,
+          };
+
+          // console.log(formData);
+
+          $.ajax({
+            url: "/candidate/profile/career-preferences/update",
+            type: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            success: function (response) {
+              console.log(response);
+
+              $.get("/candidate/profile/career-preferences", function (response) {
+                const data = response.data;
+
+                $("#industry-view").text(data.preferredIndustry?.name || "");
+                $("#job-category-view").text(data.preferredJobCategory?.name || "");
+                $("#work-mode-view").text((data.preferredWorkMode || []).map((item) => item.charAt(0).toUpperCase() + item.slice(1)).join(", "));
+                $("#shift-view").text(data.prefferedShift || "");
+                $("#location-view").text((data.preferredLocations || []).map((loc) => loc.name).join(", "));
+
+              });
+
+              $("#editCareerPreferenceModal").modal("hide");
+            },
+            error: function (error) {
+              if (handleAuthRedirect(error)) return;
+              const errorResponse = error.responseJSON;
+              if (error.status === 400 && errorResponse && errorResponse.errors) {
+                for (let field in errorResponse.errors) {
+                  $(`[data-error="${field}"]`).text(errorResponse.errors[field]);
+                }
+              } else {
+                alert(errorResponse.message || "Something went wrong.Try again later.");
+              }
+            },
+          });
+        });
+
+        // ------ upload resume ----
+
+        $("#resumeForm").on("submit", function (e) {
+          e.preventDefault();
+
+          $('[data-error="resume"]').text("");
+          const fileInput = $("input[name='resume']")[0];
+          const file = fileInput.files[0];
+
+          if (!file) {
+            $('[data-error="resume"]').text("Please upload a resume");
+            return;
+          }
+
+          const allowedTypes = ["application/pdf"];
+          const maxSize = 5 * 1024 * 1024; // 5MB
+
+          if (!allowedTypes.includes(file.type)) {
+            $('[data-error="resume"]').text("Only PDF files are allowed.");
+            return;
+          }
+
+          if (file.size > maxSize) {
+            $('[data-error="resume"]').text("File must be smaller than 5MB.");
+            return;
+          }
+
+          const formData = new FormData(this);
+
+          $.ajax({
+            url: "/candidate/profile/resume/update",
+            type: "PUT",
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (response) {
+              // console.log(response);
+              $("#resumeForm")[0].reset();
+              const resume = response.data;
+              let html = `
+                 <a href="/${resume.path}" class="btn btn-ouline-secondary" target="_blank">
+                ${resume.originalName}
+              </a>
+              `;
+              $("#resume-view").html(html);
+              $("#uploadResumeModal").modal("hide");
+            },
+            error: function (error) {
+              if (handleAuthRedirect(error)) return;
+              alert("An error occurred. Please try again.");
+            },
+          });
+        });
+
+        // --- projects --
+
+         $(".add-project").on("click", function () {
+          $("[data-error]").text("");
+          $("#projectModal").modal("show");
+        });
+
+        $('#projectForm').on('submit',function(e){
+          e.preventDefault();
+            const title = $('input[name="projectTitle"]').val().trim();
+            const description= $('textarea[name="PojectDescription"]').val().trim();
+            const link=$('input[name="projectLink"]').val().trim();
+
+            let hasError=false;
+
+            if(!title){
+               $('[data-error="title"]').text("Project title is required.");
+               hasError=true;
+            }
+
+            if(!description){
+                $('[data-error="description"]').text("Description is required.");
+            }else if(description.length>200){
+               $('[data-error="description"]').text("Project description must not exceed 200 .");
+               hasError=true;
+            }
+            if(hasError) return
+          
+            const formData={
+              title,
+              description,
+              link
+            }
+
+            $.ajax({
+              url:'/candidate/profile/project/add',
+              type:'POST',
+              contentType: "application/json",
+              data: JSON.stringify(formData),
+              success:function(response){
+                // console.log(response);
+              const project=response.data;
+
+              let html=`
+              <div class="d-flex justify-content-between align-items-start mb-1" id="project-${project._id}">
+          <div>
+            <div class="d-flex align-items-center mb-1">
+            <h6  class="mb-0 fw-bolder me-2">${project.title}</h6>
+              <button type="submit" class="btn btn-sm btn-outline-secondary p-0 delete-project" data-id="${project._id}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                  </div>`;
+
+                  if(project.description){
+                    html+=`<p class="mb-1 text-muted">${project.description}</p>`;
+                  }
+                  if(project.link){
+                html+=`  
+              <a href="${project.link}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-box-arrow-up-right me-1"></i>View Project
+              </a>`
+            }
+            htnl=`
+          </div>
+  
+        </div>
+              `
+              $('#projects-view').append(html);
+            $("#projectModal").modal("hide");
+              
+              },
+            error:function(xhr){
+              if (handleAuthRedirect(xhr)) return;
+              const errorResponse = xhr.responseJSON;
+              if (xhr.status === 400 && errorResponse && errorResponse.errors) {
+                for (let field in errorResponse.errors) {
+                  $(`[data-error="${field}"]`).text(errorResponse.errors[field]);
+                }
+              } else {
+                alert(errorResponse.message || "Something went wrong.Try again later.");
+              }
+            }
+            });
+        });
+
+
+        $(document).on("click",".delete-project" ,function () {
+          // console.log('hello');
+          const conf = confirm("Do you want to delete this project ?");
+          if (!conf) rerurn;
+
+          const id = $(this).data("id");
+       
+          $.ajax({
+            url: `/candidate/profile/project/${id}/delete`,
+            type: "DELETE",
+            success: function (response) {
+              $(`#project-${id}`).remove();
+            },
+            error: function (xhr) {
+               if (handleAuthRedirect(xhr)) return;
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+
+            },
+          });
+        });
+
+
+        // ----------- ----------
+        function handleAuthRedirect(error) {
+          const response = error.responseJSON;
+          if (error.status === 401) {
+            window.location.href = "/auth/login";
+            return true;
+          }
+          return false;
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zxx">
+  <%- include('./layouts/head') %>
+
+  <body>
+    <%- include('./layouts/header') %>
+    <main>
+     <div class="container py-5">
+        <div class="row">
+          <!-- Left Column: Blog Posts -->
+          <div class="col-md-8">
+            <!-- Blog Cards -->
+            <div id="blog-list">
+              
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-wrapper">
+              <button href="#" class="btn btn-outline-primary pagination-btn-new" id="prev-btn">Previous</button>
+              <span id="page-info" style="font-size: 1rem; color: #495057"></span>
+              <button href="#" class="btn btn-outline-primary pagination-btn-new" id="next-btn">Next</button>
+            </div>
+          </div>
+
+          <!-- Right Column: Sidebar -->
+          <div class="col-md-4">
+            <div class="sidebar">
+              <!-- Search Card -->
+              <div class="card sidebar-card p-3 mb-4">
+                <h5 class="mb-3">Search Blogs</h5>
+                <form id="searchForm">
+                  <div class="input-group">
+                    <input type="text" class="form-control" name="search" placeholder="Search title ..." autocomplete="off" />
+                    <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Category Card -->
+              <div class="card sidebar-card p-3">
+                <h5 class="mb-3">Categories</h5>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item bg-transparent border-0 px-0 py-1">
+                    <a href="#" class="category-link" data-id="">All Blogs</a>
+                  </li>
+                  <% blogCategories.forEach((category)=>{ %>
+                  <li class="list-group-item bg-transparent border-0 px-0 py-1">
+                    <a href="#" class="category-link" data-id="<%=category._id %>"><%=category.name%></a>
+                  </li>
+                  <% }) %>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <%- include('./layouts/footer') %> <%- include('./layouts/footer-scripts') %>
+
+  <script>
+          $(document).ready(function () {
+            let currentPage = 1;
+            const limit = 5;
+            let searchQuery = "";
+            let selectedCategory = "";
+
+            fetchBlogs(1);
+
+            $("#searchForm").on("submit", function (e) {
+              e.preventDefault();
+              searchQuery = $('input[name="search"]').val();
+              selectedCategory="";
+              fetchBlogs(1);
+            });
+
+            $(".category-link").on("click", function (e) {
+              e.preventDefault();
+              selectedCategory = $(this).data("id");
+              searchQuery=""
+              fetchBlogs(1);
+            });
+
+            function fetchBlogs(currentPage) {
+              const search = $("#searchInput").val();
+              const category = $("#categoryFilter").val();
+
+               $("#blog-list").html(`
+        <div class="col-12 text-center my-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <div>Loading jobs...</div>
+        </div>`);
+
+              $.ajax({
+                url: "/blogs",
+                type: "GET",
+                data: {
+                  page: currentPage,
+                  limit: limit,
+                  search: searchQuery,
+                  category: selectedCategory,
+                },
+                success: function (response) {
+                  renderBlogs(response.data);
+                  setupPagination(response.totalPages, response.page);
+                },
+                error: function (xhr) {
+                  const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+                  Swal.fire({
+                    icon: "error",
+                    title: "Oops...",
+                    text: errorMsg,
+                    showConfirmButton: true,
+                  });
+                },
+              });
+            }
+
+            function renderBlogs(blogs) {
+              const container = $("#blog-list");
+              container.empty();
+
+              if (blogs.length === 0) {
+                container.html(`
+        <div class="no-jobs-container">
+          <img src="/assets/img/no-data.jpg" alt="No jobs" />
+          <p>No blogs found.</p>
+        </div>
+      `);
+                return;
+              }
+
+              blogs.forEach((blog) => {
+                const blogCard = `
+            <div class="col-12 mb-4">
+              <div class="blog-card">
+                <img src="/${blog.coverImage}" alt="Cover Image" class="blog-image">
+                <div class="blog-content">
+                  <p class="blog-category text-muted">| ${blog.category?.name}</p>
+                  <div class="blog-title">${blog.title}</div>
+                   <div class="blog-meta">
+                  <span class="blog-meta">Posted by Admin •
+        ${new Date(blog.createdAt).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })}
+      </span>
+                  </div>
+                  <div>${blog.content.replace(/<[^>]+>/g, '').substring(0, 150)}...</div>
+                  <a href="/candidate/blogs/${blog._id}/${blog.slug}" class="read-more-btn">Read More</a>
+                </div>
+              </div>
+            </div>
+          `;
+                container.append(blogCard);
+              });
+            }
+
+            $("#prev-btn").on("click", function () {
+              if (currentPage > 1) {
+                currentPage--;
+                fetchBlogs(currentPage);
+              }
+            });
+
+            $("#next-btn").on("click", function () {
+              currentPage++;
+              fetchBlogs(currentPage);
+            });
+
+            function setupPagination(totalPages, currentPage) {
+              console.log(totalPages, currentPage);
+              $("#page-info").text(`Page ${currentPage} of ${totalPages}`);
+
+              $("#prev-btn").prop("disabled", currentPage === 1);
+              $("#next-btn").prop("disabled", currentPage === totalPages || totalPages === 0);
+            }
+          });
+    </script>
+  </body>
+</html>

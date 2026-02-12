@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%-include('./layouts/head') %>
+
+  <body id="page-top">
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <%-include('./layouts/sidebar') %>
+      <!-- End of Sidebar -->
+
+      <!-- Content Wrapper -->
+      <div id="content-wrapper" class="d-flex flex-column">
+        <!-- Main Content -->
+        <div id="content">
+          <!-- Topbar -->
+          <%-include('./layouts/topbar') %>
+          <!-- End of Topbar -->
+
+          <!-- Begin Page Content -->
+          <div class="container-fluid">
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+              <h1 class="h3 mb-0 text-gray-800">Update Profile</h1>
+            </div>
+
+            <div class="card shadow-lg border-0">
+              <div class="card-header">
+                <h5 class="mb-0">Edit Profile</h5>
+              </div>
+
+              <form id="editProfileForm" enctype="multipart/form-data">
+                <div class="card-body">
+                  <div class="form-group">
+                    <label for="rec-name" class="required">Full Name</label>
+                    <input type="text" class="form-control" name="name" id="rec-name" />
+                    <div class="text-danger" data-error="rec-name"></div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="rec-designation" class="required">Designation</label>
+                    <input type="text" class="form-control" name="designation" id="rec-designation" />
+                    <div class="text-danger" data-error="rec-designation"></div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="rec-profilePicture">Profile Picture</label><br />
+                    <img src="" id="rec-profilePicture-view" alt="Current" class="img-thumbnail mb-2" style="max-width: 100px" />
+                    <input type="file" class="form-control-file" name="profilePicture" id="rec-profilePicture" accept="image/*" />
+                    <div class="text-danger" data-error="rec-profilePicture"></div>
+                  </div>
+                </div>
+
+                <div class="card-footer text-left bg-light">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <!-- /.container-fluid -->
+        </div>
+        <!-- End of Main Content -->
+
+        <!-- Footer -->
+        <%-include('./layouts/footer') %>
+        <!-- End of Footer -->
+      </div>
+      <!-- End of Content Wrapper -->
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+      <i class="fas fa-angle-up"></i>
+    </a>
+
+    <%-include('./layouts/footer-scripts') %>
+
+    <script>
+      $(document).ready(function () {
+        function fetchRecruiterProfile() {
+          $.ajax({
+            url: "/recruiter/profile",
+            method: "GET",
+            success: function (response) {
+              console.log(response);
+              const recruiter = response.data;
+              $("#rec-name").val(recruiter.name || "");
+              $("#rec-designation").val(recruiter?.recruiterProfile?.designation || "");
+              $("#rec-profilePicture-view").attr("src", `/${recruiter.profilePicture || ""}`);
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        }
+
+        fetchRecruiterProfile();
+
+        $("#editProfileForm").on("submit", function (e) {
+          e.preventDefault();
+
+          const name = $("#rec-name").val().trim();
+          const designation = $("#rec-designation").val().trim();
+
+          let hasError = false;
+
+          $("[data-error]").text("");
+
+          if (!name) {
+            $('[data-error="rec-name"]').text("Name is required");
+            hasError = true;
+          }
+          if (!designation) {
+            $('[data-error="rec-designation"]').text("Designation is required");
+            hasError = true;
+          }
+
+          if (hasError) return;
+
+          var formData = new FormData(this);
+
+          $.ajax({
+            url: "/recruiter/update-profile",
+            method: "PUT",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+              fetchRecruiterProfile();
+
+              Swal.fire({
+                icon: "success",
+                title: "Profile Updated",
+                text: "Please logout and login again to see changes in the topbar and dashboard.",
+                confirmButtonText: "OK",
+              });
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+              if (xhr.responseJSON && xhr.responseJSON.errors) {
+                const errors = xhr.responseJSON.errors;
+                for (let field in errors) {
+                  $(`[data-error="rec-${field}"]`).text(errors[field]);
+                }
+              } else {
+                const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+                Swal.fire({
+                  icon: "error",
+                  title: "Oops...",
+                  text: errorMsg,
+                  showConfirmButton: true,
+                });
+              }
+            },
+          });
+        });
+
+        function handleAuthRedirect(error) {
+          const response = error.responseJSON;
+          if (error.status === 401) {
+            window.location.href = "/auth/login";
+            return true;
+          }
+          return false;
+        }
+      });
+    </script>
+  </body>
+</html>

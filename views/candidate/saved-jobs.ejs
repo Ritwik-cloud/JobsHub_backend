@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zxx">
+  <%- include('./layouts/head') %>
+
+  <body>
+    <%- include('./layouts/header') %>
+    <main>
+      <div class="container">
+        <h2 class="mb-4">Saved Jobs</h2>
+        <div id="jobList"></div>
+      </div>
+
+      <div class="pagination-area pb-115 text-center">
+        <div class="container">
+          <div class="row">
+            <div class="col-xl-12">
+              <div class="single-wrap d-flex justify-content-center">
+                <nav class="d-flex flex-column align-items-center">
+                  <div class="pagination-buttons mb-2">
+                    <button id="prev-btn" class="pagination-btn">Previous</button>
+                    <button id="next-btn" class="pagination-btn">Next</button>
+                  </div>
+                  <div id="page-info" class="text-muted pe-2"></div>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <%- include('./layouts/footer') %> <%- include('./layouts/footer-scripts') %>
+
+    <script>
+      $(document).ready(function () {
+        function timeAgo(createdAt) {
+          const now = new Date();
+          const createdDate = new Date(createdAt);
+          const diffMs = now - createdDate;
+
+          const seconds = Math.floor(diffMs / 1000);
+          const minutes = Math.floor(seconds / 60);
+          const hours = Math.floor(minutes / 60);
+          const days = Math.floor(hours / 24);
+
+          if (days > 0) {
+            return `${days} day${days > 1 ? "s" : ""} ago`;
+          } else if (hours > 0) {
+            return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+          } else if (minutes > 0) {
+            return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+          } else {
+            return `Just now`;
+          }
+        }
+
+        let currentPage = 1;
+
+        function fetchJobs(page = 1) {
+          currentPage = page;
+
+          $("#jobList").html(`
+    <div class="col-12 text-center my-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div>Loading jobs...</div>
+    </div>
+  `);
+
+          $.ajax({
+            url: `/candidate/jobs/saved?page=${currentPage}`,
+            type: "GET",
+            success: function (response) {
+              //   console.log(response);
+              $("#jobList").empty();
+
+              $("#totalJobFound").text(response.totalRecords + " Records Found");
+              setupPagination(response.totalPages, response.currentPage);
+
+              if (response.data.length === 0) {
+                $("#jobList").html("<p>No jobs found.</p>");
+
+                $("html, body").animate({ scrollTop: 0 }, 150);
+                return;
+              }
+
+              response.data.forEach((job) => {
+                let salaryText = "";
+
+                if (job.minimumSalary != null && job.maximumSalary != null) {
+                  salaryText = `${(job.minimumSalary / 100000).toFixed(1)} - ${(job.maximumSalary / 100000).toFixed(1)} LPA`;
+                } else if (job.minimumSalary != null) {
+                  salaryText = `From ${(job.minimumSalary / 100000).toFixed(1)} LPA`;
+                } else if (job.maximumSalary != null) {
+                  salaryText = `Up to ${(job.maximumSalary / 100000).toFixed(1)} LPA`;
+                } else {
+                  salaryText = "Not Disclosed";
+                }
+
+                const timeAgoText = timeAgo(job.createdAt);
+
+                const card = `
+                 <a href="/candidate/jobs/${job.slug}/${job._id}/page" target="_blank" class="text-decoration-none text-dark">
+                          <div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex align-items-start">
+      <img src="${
+        job.company.logo ? "/" + job.company.logo : "/assets/img/no-image.png"
+      }" class="me-3" alt="Company Logo" style="width: 60px; height: 60px; object-fit: contain;">
+      
+      <div>
+        <h5 class="card-title mb-1">${job.title}</h5>
+        <p class="text-muted mb-1">${job.company.name}</p>
+        <ul class="list-inline text-muted small mb-2">
+          <li class="list-inline-item me-3">
+            <i class="fas fa-map-marker-alt me-1"></i> ${job.location.map((loc) => loc.name).join(", ")}
+          </li>
+          <li class="list-inline-item me-3">
+            <i class="fas fa-briefcase me-1"></i>${job.minimumExperience}${job.maximumExperience !== null ? "-" + job.maximumExperience : "+"} years
+          </li>
+          <li class="list-inline-item">
+            <i class="fas fa-rupee-sign me-1"></i>${salaryText}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <small class="text-muted"><i class="far fa-clock me-1"></i>${timeAgoText}</small>
+      <button class="btn btn-sm btn-light bookmark-btn ${job.isBookmarked ? "bookmarked" : ""}" data-job-id="${job._id}" title="Save Job">
+        <i class="${job.isBookmarked ? "fas" : "far"} fa-bookmark"></i>
+      </button>
+    </div>
+  </div>
+</div> 
+</a>
+                          `;
+
+                $("#jobList").append(card);
+              });
+            },
+            error: function (xhr) {
+               if (handleAuthRedirect(xhr)) return;
+              $("#jobList").empty().append('<div class="col-12 text-center text-danger">Error loading jobs. Please try again.</div>');
+            },
+          });
+        }
+
+        fetchJobs(currentPage);
+
+        $("#prev-btn").on("click", function () {
+          if (currentPage > 1) {
+            currentPage--;
+            fetchJobs(currentPage);
+          }
+        });
+
+        $("#next-btn").on("click", function () {
+          currentPage++;
+          console.log(currentPage);
+          fetchJobs(currentPage);
+        });
+
+        function setupPagination(totalPages, currentPage) {
+          $("#page-info").text(`Page ${currentPage} of ${totalPages}`);
+
+          $("#prev-btn").prop("disabled", currentPage === 1);
+          $("#next-btn").prop("disabled", currentPage === totalPages || totalPages === 0);
+        }
+
+        $(document).on("click", ".bookmark-btn", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const button = $(this);
+          const jobId = button.data("job-id");
+          const isBookmarked = button.hasClass("bookmarked");
+
+          const url = isBookmarked ? `/candidate/jobs/${jobId}/unbookmark` : `/candidate/jobs/${jobId}/bookmark`;
+
+          $.ajax({
+            url: url,
+            type: "PUT",
+            success: function (response) {
+              button.toggleClass("bookmarked");
+              button.find("i").toggleClass("far fas");
+            },
+            error: function (xhr) {
+               if (handleAuthRedirect(xhr)) return;
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        });
+
+        function handleAuthRedirect(error) {
+          const response = error.responseJSON;
+          if (error.status === 401) {
+            window.location.href = "/auth/login";
+            return true;
+          }
+          return false;
+        }
+      });
+    </script>
+  </body>
+</html>

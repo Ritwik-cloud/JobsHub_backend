@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zxx">
+  <%- include('./layouts/head') %>
+
+  <body>
+    <%- include('./layouts/header') %>
+    <main>
+      <div class="container">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+          <h1 class="h3 mb-0 text-gray-800">Applications Status</h1>
+        </div>
+
+        <div class="card shadow mb-4">
+          <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Posted Jobs List</h6>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered table-sm text-dark" width="100%" cellspacing="0">
+                <thead>
+                  <tr>
+                    <th>Sl. No</th>
+                    <th>Company</th>
+                    <th>Title</th>
+                    <th>Job Details</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="application-list"></tbody>
+              </table>
+
+              <nav class="d-flex justify-content-between align-items-center">
+                <div id="page-info" class="text-muted ps-2"></div>
+                <div class="flex-grow-1 d-flex justify-content-center">
+                  <div class="pagination-buttons">
+                    <button id="prev-btn" class="pagination-btn">Previous</button>
+                    <button id="next-btn" class="pagination-btn">Next</button>
+                  </div>
+                </div>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <%- include('./layouts/footer') %> <%- include('./layouts/footer-scripts') %>
+    <script>
+      $(document).ready(function () {
+        let currentPage = 1;
+
+        function fetchApplications(currentPage) {
+          $("#job-list").empty();
+
+          $.ajax({
+            url: "/candidate/applied-jobs/pagination",
+            type: "GET",
+            data: {
+              page: currentPage,
+            },
+            success: function (response) {
+              console.log(response);
+              renderApplications(response.data);
+              setupPagination(response.totalPages, response.currentPage);
+            },
+            error: function (error) {
+              if (handleAuthRedirect(error)) return;
+              alert(error.responseJSON.message || "Something went wrong. Try again later");
+            },
+          });
+        }
+
+        $("#prev-btn").on("click", function () {
+          if (currentPage > 1) {
+            currentPage--;
+            fetchApplications(currentPage);
+          }
+        });
+
+        $("#next-btn").on("click", function () {
+          currentPage++;
+          fetchApplications(currentPage);
+        });
+
+        function setupPagination(totalPages, currentPage) {
+          $("#page-info").text(`Page ${currentPage} of ${totalPages}`);
+
+          $("#prev-btn").prop("disabled", currentPage === 1);
+          $("#next-btn").prop("disabled", currentPage === totalPages || totalPages === 0);
+        }
+
+        function renderApplications(data) {
+          console.log(data);
+
+          let html = "";
+          if (data.length > 0) {
+            data.forEach((application, index) => {
+              let statusBadgeClass = "";
+              if (application.status === "applied") {
+                statusBadgeClass = "badge bg-primary";
+              } else if (application.status === "accepted") {
+                statusBadgeClass = "badge bg-success";
+              } else if (application.status === "rejected") {
+                statusBadgeClass = "badge bg-danger";
+              }
+
+              html += `
+                                                    <tr class="fade-in" id='row-${application._id}'>
+                                                          <td>${index + 1}</td>
+                                                          <td class="align-middle">
+        <div class="d-flex align-items-center">
+          <img src="${application.company.logo ? "/" + application.company.logo : "/assets/img/no-image.png"}"
+               alt="Company Logo"
+               class="me-2 rounded"
+               style="width: 50px; height: 50px; object-fit: contain;">
+          <span>${application.company.name}</span>
+        </div>
+      </td>
+                                                          <td>${application.title}</td>
+                                                          <td class="text-center"><a href="/candidate/jobs/${application.jobSlug}/${application.jobId}/page" target="_blank" class="btn btn-sm btn-outline-primary">View</a></td>
+                                                          <td> <span class="${statusBadgeClass}">
+          ${application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+        </span></td>
+                                                        
+
+                                                    `;
+            });
+          } else {
+            html += `
+                                                <tr>
+                                                <td colspan='4' class='text-center'> No Data Found </td>
+                                                </tr>
+                                                `;
+          }
+          $("#application-list").html(html);
+          $(".fade-in").hide().fadeIn(500);
+        }
+
+        fetchApplications(currentPage);
+
+        function handleAuthRedirect(error) {
+          const response = error.responseJSON;
+          if (error.status === 401) {
+            window.location.href = "/auth/login";
+            return true;
+          }
+          return false;
+        }
+      });
+    </script>
+  </body>
+</html>

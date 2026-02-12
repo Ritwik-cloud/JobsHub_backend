@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%-include('./layouts/head') %>
+
+  <body id="page-top">
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <%-include('./layouts/sidebar') %>
+      <!-- End of Sidebar -->
+
+      <!-- Content Wrapper -->
+      <div id="content-wrapper" class="d-flex flex-column">
+        <!-- Main Content -->
+        <div id="content">
+          <!-- Topbar -->
+          <%-include('./layouts/topbar') %>
+          <!-- End of Topbar -->
+
+          <!-- Begin Page Content -->
+          <div class="container-fluid">
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+              <h1 class="h3 mb-0 text-gray-800">Manage Candidates</h1>
+            </div>
+
+            <div class="card mb-3">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4 mb-2">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search by name" />
+                  </div>
+
+                  <div class="col-md-3 mb-2">
+                    <select id="statusFilter" class="form-control">
+                      <option value="">All Statuses</option>
+                      <option value="true">Active</option>
+                      <option value="false">Inactive</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-2 mb-2">
+                    <button id="filterBtn" class="btn btn-primary w-100">Filter</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card shadow mb-4">
+              <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Candidate List</h6>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-sm text-dark" width="100%" cellspacing="0">
+                    <thead>
+                      <tr>
+                        <th>Sl. No</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Registred On</th>
+                        <th>Status</th>
+                        <th class="text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="candidate-list"></tbody>
+                  </table>
+
+                  <nav class="d-flex justify-content-between align-items-center">
+                    <div id="page-info" class="text-muted pl-2"></div>
+                    <div class="flex-grow-1 d-flex justify-content-center">
+                      <div class="pagination-buttons">
+                        <button id="prev-btn" class="pagination-btn">Previous</button>
+                        <button id="next-btn" class="pagination-btn">Next</button>
+                      </div>
+                    </div>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /.container-fluid -->
+        </div>
+        <!-- End of Main Content -->
+
+        <!-- Footer -->
+        <%-include('./layouts/footer') %>
+        <!-- End of Footer -->
+      </div>
+      <!-- End of Content Wrapper -->
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+      <i class="fas fa-angle-up"></i>
+    </a>
+
+    <%-include('./layouts/footer-scripts') %>
+
+    <script>
+      $(document).ready(function () {
+        let currentPage = 1;
+        const limit = 10;
+
+        function fetchCandidates(currentPage) {
+          const search = $("#searchInput").val();
+
+          const status = $("#statusFilter").val();
+
+          $.ajax({
+            url: "/admin/candidates/pagination",
+            type: "GET",
+            data: {
+              page: currentPage,
+              limit: limit,
+              search,
+              status,
+            },
+            success: function (response) {
+              // console.log(response.data);
+              renderCandidates(response.data);
+              setupPagination(response.totalPages, response.page);
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        }
+
+        $("#prev-btn").on("click", function () {
+          if (currentPage > 1) {
+            currentPage--;
+            fetchCandidates(currentPage);
+          }
+        });
+
+        $("#next-btn").on("click", function () {
+          currentPage++;
+          fetchCandidates(currentPage);
+        });
+
+        function setupPagination(totalPages, currentPage) {
+          $("#page-info").text(`Page ${currentPage} of ${totalPages}`);
+
+          $("#prev-btn").prop("disabled", currentPage === 1);
+          $("#next-btn").prop("disabled", currentPage === totalPages || totalPages === 0);
+        }
+
+        function renderCandidates(data) {
+          console.log(data);
+          $("#candidate-list").empty();
+          let html = "";
+          if (data.length > 0) {
+            data.forEach((candidate, index) => {
+              let statusClass = "";
+              if (candidate.isActive === true) {
+                statusClass = "badge badge-success";
+              } else {
+                statusClass = "badge badge-danger";
+              }
+              let statusText = "";
+              if (candidate.isActive === true) {
+                statusText = "Active";
+              } else if (candidate.isActive === false) {
+                statusText = "Deactive";
+              }
+
+              html += `
+                                                    <tr class="fade-in" id='row-${candidate._id}'>
+                                                          <td>${index + 1}</td>
+                                                          <td>${candidate.name}</td>
+                                                          <td>${candidate.email}</td>
+                                                        <td>${new Date(candidate.createdAt).toLocaleDateString("en-IN", {
+                                                          day: "2-digit",
+                                                          month: "2-digit",
+                                                          year: "numeric",
+                                                        })}</td>
+                                                          <td><span class="${statusClass} company-staus">${statusText}</span></td>
+                                                        <td class="table-actions">
+                                            ${
+                                              candidate.isActive
+                                                ? `<button class="btn btn-warning btn-sm deactivate-btn" data-id="${candidate._id}">Deactivate</button>`
+                                                : `<button class="btn btn-success btn-sm activate-btn" data-id="${candidate._id}">Activate</button>`
+                                            }
+                                               <button class="btn btn-danger btn-sm remove-btn" data-id="${candidate._id}">Remove</button> 
+                                            </td>    
+                                                        
+                                                    `;
+            });
+          } else {
+            html += `
+                                                <tr>
+                                                <td colspan='8' class='text-center'> No Data Found </td>
+                                                </tr>
+                                                `;
+          }
+          $("#candidate-list").html(html);
+          $(".fade-in").hide().fadeIn(500);
+        }
+
+        fetchCandidates(currentPage);
+
+        $("#filterBtn").on("click", () => {
+          fetchCandidates(1);
+        });
+
+        $(document).on("click", ".activate-btn", function (e) {
+          if (!confirm("Are you sure you want to activate this candate?")) return;
+
+          const candidateId = $(this).data("id");
+          const $button = $(this);
+
+          $.ajax({
+            url: `/admin/candidates/${candidateId}/activate`,
+            type: "PUT",
+            success: function (response) {
+              console.log(response);
+              $button.removeClass("btn-success activate-btn").addClass("btn-warning deactivate-btn").text("Deactivate");
+
+              const row = $(`#row-${candidateId}`);
+
+              row.find("span.company-staus").removeClass("badge-danger").addClass("badge-success").text("Active");
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        });
+
+        $(document).on("click", ".deactivate-btn", function (e) {
+          if (!confirm("Are you sure you want to deactivate this candidate?.")) return;
+
+          const candidateId = $(this).data("id");
+          const $button = $(this);
+
+          $.ajax({
+            url: `/admin/candidates/${candidateId}/deactivate`,
+            type: "PUT",
+            success: function (response) {
+              $button.removeClass("btn-warning deactivate-btn").addClass("btn-success activate-btn").text("Activate");
+
+              const row = $(`#row-${candidateId}`);
+
+              row.find("span.company-staus").removeClass("badge-success").addClass("badge-danger").text("Deactive");
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        });
+
+        $(document).on("click", ".remove-btn", function (e) {
+          if (!confirm("Are you sure you want to remove this candidate from platform?.")) return;
+
+          const candidateId = $(this).data("id");
+          const $button = $(this);
+
+          $.ajax({
+            url: `/admin/candidates/${candidateId}/remove`,
+            type: "PUT",
+            success: function (response) {
+              const row = $(`#row-${candidateId}`);
+
+              row.remove();
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        });
+
+        function handleAuthRedirect(error) {
+          const response = error.responseJSON;
+          if (error.status === 401) {
+            window.location.href = "/auth/login";
+            return true;
+          }
+          return false;
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zxx">
+<%- include('./layouts/head') %>
+
+  <body>
+    <%- include('./layouts/header') %>
+    <main>
+      <div class="container">
+      
+        <div class="cd-profile-box d-flex align-items-center justify-content-between p-3 border rounded shadow-sm">
+  <div class="d-flex align-items-center">
+    <img src="<%= candidateDetail.profilePicture ? '/' + candidateDetail.profilePicture : '/assets/img/no-image.png' %>" 
+         alt="Profile Picture" 
+         class="rounded-circle mr-3" 
+         style="width: 60px; height: 60px; object-fit: cover;" />
+    
+    <div class="ml-3">
+      <h4 class="mb-0">Welcome back, <%= candidateDetail.name %></h4>
+    </div>
+  </div>
+
+  <a href="<%=generateUrl('candidate-profile') %>" class="btn btn-outline-primary btn-sm ml-auto">
+    View Profile
+  </a>
+</div>
+
+
+       
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="cd-stat-card">
+              <h3><%=candidateDetail?.profile?.bookmarkedJobs.length?candidateDetail?.profile?.bookmarkedJobs.length:0 %></h3>
+              <p class="mb-0">Saved Jobs</p>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="cd-stat-card">
+              <h3><%=applicationsCount%></h3>
+              <p class="mb-0">Total Applied</p>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="cd-stat-card">
+              <h3><%=pendingApplicationsCount%></h3>
+              <p class="mb-0">Application Pending</p>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="cd-stat-card">
+              <h3><%=acceptedApplicationsCount%></h3>
+              <p class="mb-0">Applications Accepted</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recommended Jobs Section -->
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Recommended Jobs</h5>
+            <%if(totalRecommendedJobs>3){%>
+            <a href="/candidate/jobs/recommendedpage" class="btn btn-sm btn-outline-primary">View All</a>
+            <% } %>
+          </div>
+
+          <div class="row g-3">
+            <% if(recommendedJobs && recommendedJobs.length>0){ recommendedJobs.forEach((job)=>{ %>
+            <div class="col-md-4">
+              <a href="/candidate/jobs/<%=job.slug%>/<%=job._id%>/page" class="text-decoration-none text-dark">
+                <div class="cd-job-card h-100 d-flex align-items-start">
+                  <!-- Company Logo -->
+                  <div class="me-3">
+                    <img src="/<%= job.company.logo%>" alt="<%= job.company.name %> Logo" style="width: 50px; height: 50px; object-fit: contain" />
+                  </div>
+
+                  <!-- Job Info -->
+                  <div>
+                    <h6 class="mb-1"><%= job.title %></h6>
+                    <p class="text-muted mb-2"><%= job.company.name %></p>
+                    <div class="d-flex align-items-center text-muted location">
+                      <i class="bi bi-geo-alt-fill me-1"></i>
+                      <%= job.location.map((item) => item.name).join(', ') %>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+            <% }) } %>
+
+          </div>
+        </div>
+      </div>
+    </main>
+    <%- include('./layouts/footer') %> <%- include('./layouts/footer-scripts') %>
+
+    <script>
+      $(document).ready(function () {
+        dayjs.extend(window.dayjs_plugin_relativeTime);
+
+        const profileTimeEl = document.getElementById("profile-updated");
+        const isoTime = profileTimeEl.getAttribute("data-time");
+        const timeAgo = dayjs(isoTime).fromNow();
+
+        profileTimeEl.textContent = `Last Updated ${timeAgo}`;
+      });
+    </script>
+  </body>
+</html>

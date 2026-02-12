@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%-include('./layouts/head') %>
+
+  <body id="page-top">
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <%-include('./layouts/sidebar') %>
+      <!-- End of Sidebar -->
+
+      <!-- Content Wrapper -->
+      <div id="content-wrapper" class="d-flex flex-column">
+        <!-- Main Content -->
+        <div id="content">
+          <!-- Topbar -->
+          <%-include('./layouts/topbar') %>
+          <!-- End of Topbar -->
+
+          <!-- Begin Page Content -->
+          <div class="container-fluid">
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+              <h1 class="h3 mb-0 text-gray-800">Job Post</h1>
+            </div>
+            <div id="job-post-msg" class="alert alert-success d-none" role="alert"></div>
+            <form id="jobPostForm">
+              <!-- Title -->
+              <div class="form-group">
+                <label for="title" class="required">Job Title</label>
+                <input type="text" class="form-control" id="title" name="title" placeholder="Enter job title" />
+                <div class="text-danger" data-error="title"></div>
+              </div>
+
+              <!-- Description -->
+              <div class="form-group">
+                <label for="description" class="required">Job Description</label>
+                <!-- Quill container -->
+                <div id="quillJobDescription" style="height: 250px" class="bg-white"></div>
+                <div class="text-danger" data-error="description"></div>
+                <!-- Hidden field to store final HTML -->
+                <textarea id="description" name="description" style="display: none"></textarea>
+              </div>
+
+              <!-- Locations -->
+              <div class="form-group">
+                <label for="location" class="required">Location(s)</label>
+                <div id="selected-locations" class="mb-3"></div>
+
+                <!-- Input for typing skill -->
+                <input type="text" id="locationInput" class="form-control" placeholder="Start typing a location" autocomplete="off" />
+                <div class="text-danger" data-error="location"></div>
+                <div id="location-suggestions" class="list-group mt-2"></div>
+              </div>
+
+              <!-- Industry -->
+              <div class="form-group">
+                <label for="industry" class="required">Industry</label>
+                <select class="form-control" id="industry" name="industry">
+                  <option value="">Select industry</option>
+                  <% industries.forEach((item)=>{ %>
+                  <option value="<%=item._id%>"><%=item.name%></option>
+                  <% }) %>
+                </select>
+                <div class="text-danger" data-error="industry"></div>
+              </div>
+
+              <!-- Job Category -->
+              <div class="form-group">
+                <label for="jobCategory" class="required">Job Category</label>
+                <select class="form-control" id="jobCategory" name="jobCategory">
+                  <option value="">Select category</option>
+                  <% jobCategories.forEach((item)=>{ %>
+                  <option value="<%=item._id%>"><%=item.name%></option>
+                  <% }) %>
+                </select>
+                <div class="text-danger" data-error="jobCategory"></div>
+              </div>
+
+              <!-- Job Type & Work Mode -->
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="jobType" class="required">Job Type</label>
+                  <select class="form-control" id="jobType" name="jobType">
+                    <option value="">Select Job Type</option>
+                    <option value="full-time">Full-time</option>
+                    <option value="part-time">Part-time</option>
+                    <option value="contract">Contract</option>
+                  </select>
+                  <div class="text-danger" data-error="jobType"></div>
+                </div>
+
+                <div class="form-group col-md-6">
+                  <label for="workMode" class="required">Work Mode</label>
+                  <select class="form-control" id="workMode" name="workMode">
+                    <option value="">select Work Mode</option>
+                    <option value="work from office">Work from Office</option>
+                    <option value="work from home">Work from Home</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="remote">Remote</option>
+                  </select>
+                  <div class="text-danger" data-error="workMode"></div>
+                </div>
+              </div>
+
+              <!-- Experience Level -->
+              <div class="form-group">
+                <label for="experienceLevel">Experience Level</label>
+                <select class="form-control" id="experienceLevel" name="experienceLevel">
+                  <option value="">Select</option>
+                  <option value="fresher">Fresher</option>
+                  <option value="entry-level">Entry-level</option>
+                  <option value="associate">Associate</option>
+                  <option value="mid-level">Mid-level</option>
+                  <option value="senior">Senior</option>
+                  <option value="lead">Lead</option>
+                  <option value="manager">Manager</option>
+                  <option value="director">Director</option>
+                  <option value="executive">Executive</option>
+                </select>
+                <div class="text-danger" data-error="experienceLevel"></div>
+              </div>
+
+              <!-- Experience Range -->
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="minimumExperience" class="required">Minimum Experience (years)</label>
+                  <input type="number" class="form-control" id="minimumExperience" name="minimumExperience" min="0" />
+                  <div class="text-danger" data-error="minimumExperience"></div>
+                </div>
+                <div class="form-group col-md-6">
+                  <label for="maximumExperience">Maximum Experience (years)</label>
+                  <input type="number" class="form-control" id="maximumExperience" name="maximumExperience" min="0" />
+                </div>
+                <div class="text-danger" data-error="maximumExperience"></div>
+              </div>
+
+              <!-- Salary Range -->
+              <div class="form-row">
+                <div class="form-group col-md-4">
+                  <label for="minimumSalary">Minimum Salary (LPA)</label>
+                  <input type="number" class="form-control" id="minimumSalary" name="minimumSalary" min="0" />
+                  <div class="text-danger" data-error="minimumSalary"></div>
+                </div>
+                <div class="form-group col-md-4">
+                  <label for="maximumSalary">Maximum Salary (LPA)</label>
+                  <input type="number" class="form-control" id="maximumSalary" name="maximumSalary" min="0" />
+                  <div class="text-danger" data-error="maximumSalary"></div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="skillsRequired" class="required">Skills Required</label>
+                <div id="selected-skills" class="mb-3"></div>
+
+                <input type="text" id="skillInput" class="form-control" placeholder="Start typing a skill" autocomplete="off" />
+                <div class="text-danger" data-error="skillsRequired"></div>
+
+                <div id="skill-suggestions" class="list-group mt-2"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="applicationDeadline" class="required"
+                  >Application Deadline
+                  <small class="text-muted ml-2">(cannot be more than 30 days from today)</small>
+                </label>
+                <input type="date" class="form-control" id="applicationDeadline" name="applicationDeadline" />
+                <div class="text-danger" data-error="applicationDeadline"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="vacancies">Number of Vacancies</label>
+                <input type="number" class="form-control" id="vacancies" name="vacancies" min="1" />
+                <div class="text-danger" data-error="vacancies"></div>
+              </div>
+
+              <button type="submit" class="btn btn-primary">Post Job</button>
+            </form>
+          </div>
+          <!-- /.container-fluid -->
+        </div>
+        <!-- End of Main Content -->
+
+        <!-- Footer -->
+        <%-include('./layouts/footer') %>
+        <!-- End of Footer -->
+      </div>
+      <!-- End of Content Wrapper -->
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+      <i class="fas fa-angle-up"></i>
+    </a>
+
+    <%-include('./layouts/footer-scripts') %>
+    <script>
+      $(document).ready(function () {
+        const quillJobDescription = new Quill("#quillJobDescription", {
+          theme: "snow",
+          // modules: {
+          //   toolbar: [
+          //     ['bold', 'italic', 'underline'],
+          //     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          //     ['clean']  // remove formatting button
+          //   ]
+          // }
+        });
+
+        const selectedLocations = new Map();
+        const selectedSkills = new Map();
+
+        // ----- skill ------------
+
+        $("#skillInput").on("input", function () {
+          const query = $(this).val().trim();
+          $("#skill-suggestions").empty();
+
+          if (query.length < 1) return;
+
+          $.ajax({
+            url: `/skills/search?q=${query}`,
+            method: "GET",
+            success: function (response) {
+              const skills = response.skills;
+              skills.forEach((skill) => {
+                if (!selectedSkills.has(skill._id)) {
+                  const item = $(`
+              <button class="list-group-item list-group-item-action">${skill.name}</button>
+            `);
+                  item.on("click", function () {
+                    selectSkill(skill);
+                  });
+                  $("#skill-suggestions").append(item);
+                }
+              });
+            },
+          });
+        });
+
+        function selectSkill(skill) {
+          if (selectedSkills.has(skill._id)) return;
+
+          selectedSkills.set(skill._id, skill.name);
+          updateSelectedSkills();
+          $("#skillInput").val("");
+          $("#skill-suggestions").empty();
+        }
+
+        function removeSkill(skillId) {
+          selectedSkills.delete(skillId);
+          updateSelectedSkills();
+        }
+
+        function updateSelectedSkills() {
+          const container = $("#selected-skills");
+          container.empty();
+
+          selectedSkills.forEach((name, id) => {
+            const badge = $(`
+        <span class="badge border border-secondary mr-2">
+          ${name}
+          <i class="fas fa-times ml-1" style="cursor:pointer;" data-id="${id}"></i>
+        </span>
+      `);
+            badge.find("i").on("click", function () {
+              const id = $(this).data("id");
+              removeSkill(id);
+            });
+            container.append(badge);
+          });
+        }
+
+        // ------- location -----------
+
+        $("#locationInput").on("input", function () {
+          const query = $(this).val().trim();
+          $("#location-suggestions").empty();
+
+          if (query.length < 1) return;
+
+          $.ajax({
+            url: `/locations/search?q=${query}`,
+            method: "GET",
+            success: function (response) {
+              console.log(response);
+              const locations = response.locations;
+              locations.forEach((location) => {
+                if (!selectedLocations.has(location._id)) {
+                  const item = $(`
+              <button class="list-group-item list-group-item-action">${location.name}</button>
+            `);
+                  item.on("click", function () {
+                    selectLocation(location);
+                  });
+                  $("#location-suggestions").append(item);
+                }
+              });
+            },
+          });
+        });
+
+        function selectLocation(location) {
+          if (selectedLocations.has(location._id)) return;
+
+          selectedLocations.set(location._id, location.name);
+          updateSelectedLocations();
+          $("#locationInput").val("");
+          $("#location-suggestions").empty();
+        }
+
+        function removeLocation(locationId) {
+          selectedLocations.delete(locationId);
+          updateSelectedLocations();
+        }
+
+        function updateSelectedLocations() {
+          const container = $("#selected-locations");
+          container.empty();
+          console.log(selectedLocations);
+          selectedLocations.forEach((name, id) => {
+            const badge = $(`
+        <span class="badge border border-secondary mr-2">
+          ${name}
+          <i class="fas fa-times ml-1" style="cursor:pointer;" data-id="${id}"></i>
+        </span>
+      `);
+            badge.find("i").on("click", function () {
+              const id = $(this).data("id");
+              removeLocation(id);
+            });
+            container.append(badge);
+          });
+        }
+
+        // -------- job post -------
+
+        $("#jobPostForm").submit(function (e) {
+          e.preventDefault();
+
+          $("#description").val(quillJobDescription.root.innerHTML);
+
+          const title = $('input[name="title"]').val().trim();
+          const formattedTitle=title.split(' ').map((w)=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+          const description = $('textarea[name="description"]').val();
+          const location = Array.from(selectedLocations.keys());
+          const industry = $('select[name="industry"]').val();
+          const jobCategory = $('select[name="jobCategory"]').val();
+          const jobType = $('select[name="jobType"]').val();
+          const workMode = $('select[name="workMode"]').val();
+          const experienceLevel = $('select[name="experienceLevel"]').val();
+          const skillsRequired = Array.from(selectedSkills.keys());
+          const applicationDeadline = $('input[name="applicationDeadline"]').val();
+
+          const minExpRaw = $('input[name="minimumExperience"]').val();
+          const maxExpRaw = $('input[name="maximumExperience"]').val();
+          const minSalaryRaw = $('input[name="minimumSalary"]').val();
+          const maxSalaryRaw = $('input[name="maximumSalary"]').val();
+          const vacanciesRaw = $('input[name="vacancies"]').val();
+
+          const minimumExperience = minExpRaw === "" ? null : Number(minExpRaw);
+          const maximumExperience = maxExpRaw === "" ? null : Number(maxExpRaw);
+          const minimumSalary = minSalaryRaw === "" ? null : Number(minSalaryRaw);
+          const maximumSalary = maxSalaryRaw === "" ? null : Number(maxSalaryRaw);
+          const vacancies = vacanciesRaw === "" ? null : parseInt(vacanciesRaw);
+
+          let hasError = false;
+
+          $("[data-error]").text("");
+
+          if (!title) {
+            $('[data-error="title"]').text("Job title is required");
+            hasError = true;
+          }
+          if (!description || description === "<p><br></p>") {
+            $('[data-error="description"]').text("Job description is required");
+            hasError = true;
+          }
+          if (location.length === 0) {
+            $('[data-error="location"]').text("Location is required");
+            hasError = true;
+          }
+          if (!industry) {
+            $('[data-error="industry"]').text("Job industry is required");
+            hasError = true;
+          }
+          if (!jobCategory) {
+            $('[data-error="jobCategory"]').text("Job category is required");
+            hasError = true;
+          }
+          if (!jobType) {
+            $('[data-error="jobType"]').text("Job type is required");
+            hasError = true;
+          }
+          if (!workMode) {
+            $('[data-error="workMode"]').text("Work mode is required");
+            hasError = true;
+          }
+
+          if (minimumExperience === null || isNaN(minimumExperience)) {
+            $('[data-error="minimumExperience"]').text("Minimum experience is required");
+            hasError = true;
+          } else if (minimumExperience < 0) {
+            $('[data-error="minimumExperience"]').text("Minimum experience must be ≥ 0");
+            hasError = true;
+          }
+
+          if (maximumExperience !== null && maximumExperience < 0) {
+            $('[data-error="maximumExperience"]').text("Maximum experience must be ≥ 0");
+            hasError = true;
+          }
+
+          if (
+            minimumExperience !== null &&
+            maximumExperience !== null &&
+            !isNaN(minimumExperience) &&
+            !isNaN(maximumExperience) &&
+            minimumExperience > maximumExperience
+          ) {
+            $('[data-error="minimumExperience"]').text("Minimum experience cannot exceed maximum experience.");
+            hasError = true;
+          }
+
+          if (minimumSalary !== null && minimumSalary < 0) {
+            $('[data-error="minimumSalary"]').text("Minimum salary must be ≥ 0");
+            hasError = true;
+          }
+          if (maximumSalary !== null && maximumSalary < 0) {
+            $('[data-error="maximumSalary"]').text("Maximum salary must be ≥ 0");
+            hasError = true;
+          }
+
+          if (minimumSalary !== null && maximumSalary !== null && minimumSalary > maximumSalary) {
+            $('[data-error="minimumSalary"]').text("Minimum salary cannot exceed maximum salary.");
+            hasError = true;
+          }
+
+          if (skillsRequired.length === 0) {
+            $('[data-error="skillsRequired"]').text("skills are required");
+            hasError = true;
+          }
+
+          if (!applicationDeadline) {
+            $('[data-error="applicationDeadline"]').text("Application deadline is required");
+            hasError = true;
+          } else {
+            const selectedDate = new Date(applicationDeadline);
+            const today = new Date();
+
+            selectedDate.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+
+            const maxAllowedDate = new Date(today);
+            maxAllowedDate.setDate(today.getDate() + 30);
+
+            if (selectedDate < today) {
+              $('[data-error="applicationDeadline"]').text("Application deadline cannot be in the past");
+              hasError = true;
+            } else if (selectedDate > maxAllowedDate) {
+              $('[data-error="applicationDeadline"]').text("Application deadline cannot be more than 30 days from today");
+              hasError = true;
+            }
+          }
+
+          if (vacancies !== null && vacancies < 0) {
+            $('[data-error="vacancies"]').text("Vacancies must be ≥ 0");
+            hasError = true;
+          }
+
+          if (hasError) return;
+
+          const formData = {
+            title: formattedTitle,
+            description,
+            location,
+            industry,
+            jobCategory,
+            jobType,
+            workMode,
+            experienceLevel: experienceLevel ? experienceLevel : null,
+            minimumExperience,
+            maximumExperience,
+            minimumSalary,
+            maximumSalary,
+            skillsRequired,
+            applicationDeadline,
+            vacancies,
+          };
+
+          // console.log(formData);
+
+          $.ajax({
+            url: "/recruiter/jobs/add",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(formData),
+            success: function (response) {
+              // console.log(response);
+              $("#jobPostForm")[0].reset();
+              quillJobDescription.setContents([]);
+
+              selectedSkills.clear();
+              $("#selected-skills").empty();
+              $("#skillInput").val("");
+              $("#skill-suggestions").empty();
+
+              selectedLocations.clear();
+              $("#selected-locations").empty();
+              $("#locationInput").val("");
+              $("#location-suggestions").empty();
+
+              $("[data-error]").text("");
+
+              $("#job-post-msg").text(response.message).removeClass("d-none");
+
+              setTimeout(() => {
+                $("#job-post-msg").addClass("d-none");
+              }, 3000);
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+              if (xhr.responseJSON && xhr.responseJSON.errors) {
+                const errors = xhr.responseJSON.errors;
+                for (let field in errors) {
+                  $(`[data-error="${field}"]`).text(errors[field]);
+                }
+              } else {
+                const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+                Swal.fire({
+                  icon: "error",
+                  title: "Oops...",
+                  text: errorMsg,
+                  showConfirmButton: true,
+                });
+              }
+            },
+          });
+        });
+
+        function handleAuthRedirect(error) {
+          const response = error.responseJSON;
+          if (error.status === 401) {
+            window.location.href = "/auth/login";
+            return true;
+          }
+          return false;
+        }
+      });
+    </script>
+  </body>
+</html>

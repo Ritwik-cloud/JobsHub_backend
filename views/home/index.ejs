@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zxx">
+  <%- include('./layouts/head') %>
+
+  <body>
+    <%- include('./layouts/header') %>
+    <main>
+      <!-- slider Area Start-->
+      <div class="slider-area">
+        <section class="job-hero-section py-5">
+          <div class="container">
+            <div class="row justify-content-center text-center">
+              <div class="col-lg-8 col-md-10">
+                <h1 class="job-hero-title mb-3">Find Your Dream Job Today</h1>
+                <p class="job-hero-subtitle mb-4 text-muted">Explore wide range of jobs tailored to your skills, interests, and goals.</p>
+
+                <!-- Search Box -->
+                <div class="search-box-wrapper bg-white p-3 mt-4 shadow-sm rounded">
+                  <form id="jobSearchForm" class="d-flex flex-wrap align-items-center gap-2">
+                    <!-- Keyword Input -->
+                    <div class="flex-grow-1 flex-shrink-1 position-relative" style="min-width: 250px; max-width: 40%">
+                      <div class="d-flex align-items-center border rounded px-2 py-1 bg-white">
+                        <span class="me-2 text-secondary">
+                          <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control border-0" id="searchBox" placeholder="Enter skill or job title" autocomplete="off" />
+                      </div>
+
+                      <ul id="suggestionList" class="list-group position-absolute w-100" style="z-index: 1000"></ul>
+                    </div>
+
+                    <div style="flex: 1 1 150px; min-width: 150px">
+                      <label for="searchLocation" class="form-label d-none">Location</label>
+                      <div class="d-flex align-items-center border rounded px-2 py-1 bg-white">
+                        <span class="me-2 text-secondary">
+                          <i class="fas fa-map-marker-alt"></i>
+                        </span>
+                        <select
+                          class="selectpicker w-100"
+                          id="searchLocation"
+                          data-live-search="true"
+                          data-dropup-auto="false"
+                          data-style="border-0 bg-white"
+                          title="Select Location"
+                        >
+                          <% if(locations && locations.length > 0) { locations.forEach((item) => { %>
+                          <option value="<%= item._id %>"><%= item.name %></option>
+                          <% }); } %>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style="flex: 1 1 150px; min-width: 150px">
+                      <label for="searchExperience" class="form-label d-none">Experience</label>
+                      <div class="d-flex align-items-center border rounded px-2 py-1 bg-white">
+                        <span class="me-2 text-secondary">
+                          <i class="fas fa-briefcase"></i>
+                        </span>
+                        <select
+                          class="selectpicker w-100"
+                          id="searchExperience"
+                          data-dropup-auto="false"
+                          data-style="border-0 bg-white"
+                          title="Select Experience"
+                        >
+                          <% for (let i = 1; i <= 15; i++) { %>
+                          <option value="<%= i %>"><%= i %> Years</option>
+                          <% } %>
+                          <option value="16">15+ years</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Search Button -->
+                    <div style="flex: 0 0 auto">
+                      <button type="submit" class="btn btn-primary px-4">Search</button>
+                    </div>
+                  </form>
+                  <div class="text-start text-danger" id="search-error"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="job-category-section py-5">
+        <div class="container">
+          <div class="row justify-content-center text-center mb-4">
+            <div class="col-lg-8 col-md-10">
+              <h2 class="section-title">Browse by Job Category</h2>
+              <p class="text-muted">Discover jobs that match your interest</p>
+            </div>
+          </div>
+
+          <% if (jobCategoriesInJobs && jobCategoriesInJobs.length > 0) { %>
+          <div class="swiper myCategorySwiper">
+            <div class="swiper-wrapper <%= jobCategoriesInJobs.length < 4 ? 'centered-wrapper' : '' %>">
+              <% jobCategoriesInJobs.forEach(category => { %>
+              <div class="swiper-slide">
+                <a href="/jobs/page?jobCategory=<%= category.categoryId%>" class="text-decoration-none">
+                  <div class="category-box">
+                    <h6><%= category.name %></h6>
+                    <p><%= category.count %> job<%= category.count > 1 ? 's' : '' %></p>
+                  </div>
+                </a>
+              </div>
+              <% }) %>
+            </div>
+
+            <!-- Swiper navigation -->
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+          </div>
+          <% } else { %>
+          <div class="text-center text-muted">No job categories available at the moment.</div>
+          <% } %>
+        </div>
+      </section>
+
+      <section class="py-5 bg-light how-it-works-section">
+        <div class="container text-center">
+          <h3 class="mb-5">How It Works</h3>
+          <div class="row justify-content-center g-4">
+            <div class="col-md-4">
+              <div class="card p-4 h-100 border-0 shadow-sm hover-card">
+                <div class="icon-wrapper mb-3">
+                  <i class="fas fa-search fa-3x text-primary"></i>
+                </div>
+                <h5>Search a Job</h5>
+                <p class="text-muted">Find the perfect role matching your skills and preferences.</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card p-4 h-100 border-0 shadow-sm hover-card">
+                <div class="icon-wrapper mb-3">
+                  <i class="fas fa-check-circle fa-3x text-primary"></i>
+                </div>
+                <h5>Apply for Job</h5>
+                <p class="text-muted">Send your application directly through our platform in just a few clicks.</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card p-4 h-100 border-0 shadow-sm hover-card">
+                <div class="icon-wrapper mb-3">
+                  <i class="fas fa-handshake fa-3x text-primary"></i>
+                </div>
+                <h5>Get the Job</h5>
+                <p class="text-muted">Hear back from employers and land your next opportunity.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="blog-section py-5 bg-light">
+        <div class="container">
+          <div class="text-center mb-5">
+            <h3 class="section-title">Latest Blog Posts</h3>
+            <p class="text-muted">Insights, tips, and trends from the world of careers</p>
+          </div>
+
+          <div class="row g-4">
+            <% if(latestBlogs && latestBlogs.length>0){ latestBlogs.forEach((blog)=>{ %>
+            <div class="col-md-4">
+              <div class="blog-card shadow-sm h-100">
+                <img src="/<%=blog.coverImage%>" class="img-fluid blog-img" alt="Blog 1" />
+                <div class="p-3 blog-cap">
+                  <p class="blog-category text-muted mb-1">| <%=blog.category.name%></p>
+                  <h5 class="blog-title"><a href="#" class="text-dark text-decoration-none"><%=blog.title%></a></h5>
+                  <a href="/blogs/<%=blog._id%>/<%=blog.slug%>" class="more-btn text-primary">Read more »</a>
+                </div>
+              </div>
+            </div>
+            <% }) } %>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <%- include('./layouts/footer') %> <%- include('./layouts/footer-scripts') %>
+
+    <script>
+      $(document).ready(function () {
+        new Swiper(".myCategorySwiper", {
+          slidesPerView: "auto", // works because slide width is fixed
+          spaceBetween: 20,
+          navigation: {
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev",
+          },
+        });
+
+        function fetchSuggestions(query) {
+          $.get("/search-suggestions-for-skill-title", { q: query }, function (data) {
+            $("#suggestionList").empty();
+            data.forEach((item) => {
+              $("#suggestionList").append(`
+          <li class="list-group-item list-group-item-action" data-label="${item.label}">
+            ${item.label} <span class="badge bg-secondary float-end">${item.type}</span>
+          </li>
+        `);
+            });
+          });
+        }
+
+        $("#searchBox").on("input", function () {
+          const query = $(this).val().trim();
+          if (query.length === 0) {
+            $("#suggestionList").empty();
+            return;
+          }
+
+          fetchSuggestions(query);
+        });
+
+        $("#searchBox").on("focus", function () {
+          const query = $(this).val().trim();
+          if (query.length > 0) {
+            fetchSuggestions(query);
+          }
+        });
+
+        $("#suggestionList").on("click", "li", function () {
+          const label = $(this).data("label");
+          $("#searchBox").val(label);
+          $("#suggestionList").empty();
+        });
+
+        $(document).on("click", function (e) {
+          if (!$(e.target).closest("#searchBox").length && !$(e.target).closest("#suggestionList").length) {
+            $("#suggestionList").empty();
+          }
+        });
+
+        $(".selectpicker").selectpicker();
+
+        $("#jobSearchForm").on("submit", function (e) {
+          e.preventDefault();
+
+          $('#search-error').text('');
+
+          const keyword = $("#searchBox").val().trim();
+          const location = $("#searchLocation").val();
+          const experience = $("#searchExperience").val();
+
+          if(!keyword){
+            $('#search-error').text('Please Enter search keyword');
+            return;
+          }
+
+          const queryParams = new URLSearchParams();
+
+          if (keyword) queryParams.append("search", keyword);
+          if (location) queryParams.append("location", location);
+          if (experience) queryParams.append("experience", experience);
+
+          // Redirect to /find-jobs with query
+          window.location.href = `/jobs/page?${queryParams.toString()}`;
+        });
+      });
+    </script>
+  </body>
+</html>

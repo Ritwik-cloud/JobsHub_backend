@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%-include('./layouts/head') %>
+
+  <body id="page-top">
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <%-include('./layouts/sidebar') %>
+      <!-- End of Sidebar -->
+
+      <!-- Content Wrapper -->
+      <div id="content-wrapper" class="d-flex flex-column">
+        <!-- Main Content -->
+        <div id="content">
+          <!-- Topbar -->
+          <%-include('./layouts/topbar') %>
+          <!-- End of Topbar -->
+
+          <!-- Begin Page Content -->
+          <div class="container-fluid">
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+              <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+            </div>
+
+            <% if (error_msg && error_msg.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <%= error_msg[0] %>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <% } %> <% if (success_msg && success_msg.length > 0) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              <%= success_msg[0] %>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <% } %>
+
+            <% if(!isCompanyActive){%>
+              <div class="alert alert-warning" role="alert" style="margin-bottom: 15px;">
+             Your company profile is currently <strong>inactive</strong>. Your acess will be limited.
+          </div>
+             <% } %> 
+            <div class="dashboard-header-box">
+              <h4>Welcome back, <strong><%=recruiterName%></strong> — <%= designation ? `${designation}, ` : '' %> Recruiter at <strong><%=company%></strong></h4>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-md-3">
+                <div class="summary-card card-1 text-white">
+                  <h6>Total Jobs</h6>
+                  <h3><%=totalJobs%></h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="summary-card card-2 text-white">
+                  <h6>Active Jobs</h6>
+                  <h3><%=activeJobs%></h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="summary-card card-3 text-white">
+                  <h6>Deadline Soon (within 3 days)</h6>
+                  <h3><%=activeJobsClosingSoon%></h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="summary-card card-4 text-white">
+                  <h6>Total Applications</h6>
+                  <h3><%=totalApllicationsCount%></h3>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-4">
+                <div class="expiring-jobs-box">
+                  <h5>Jobs (Active) Expiring in 7 Days</h5>
+                  <div class="table-responsive">
+                    <table class="table table-bordered table-sm expiring-table">
+                      <thead class="thead-light">
+                        <tr>
+                          <th>Job Title</th>
+                          <th>Deadline</th>
+                          <th>Days Left</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% if(jobsWithLeftDays && jobsWithLeftDays.length>0){ jobsWithLeftDays.forEach((job)=>{ %>
+                        <tr>
+                          <td><%=job.title%><small class="text-muted"><%= '(#'+job._id.toString().slice(-6).toUpperCase()+')' %></small></td>
+                          <td>
+                            <%=new Date(job.applicationDeadline).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric", })%>
+                          </td>
+                          <td><%=job.daysLeft%></td>
+                        </tr>
+                        <% }) }else{ %>
+                        <tr>
+                          <td colspan="3" class="text-center">No Data</td>
+                        </tr>
+                        <% } %>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                id="applicationStats"
+                data-pending="<%= pendingApplictionsCount %>"
+                data-accepted="<%=acceptedApplictionsCount%>"
+                data-rejected="<%=rejectedApplictionsCount%>"
+              ></div>
+
+              <div class="col-md-6 mb-4">
+                <div class="chart-box">
+                  <h5>Application Status Breakdown</h5>
+                  <div class="chart-container">
+                    <canvas id="applicationChart" height="200"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /.container-fluid -->
+        </div>
+        <!-- End of Main Content -->
+
+        <!-- Footer -->
+        <%-include('./layouts/footer') %>
+        <!-- End of Footer -->
+      </div>
+      <!-- End of Content Wrapper -->
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+      <i class="fas fa-angle-up"></i>
+    </a>
+
+    <%-include('./layouts/footer-scripts') %>
+
+    <script>
+      $(document).ready(function () {
+        const stats = $("#applicationStats").data();
+        const ctx = $("#applicationChart")[0].getContext("2d");
+
+        const applicationChart = new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: ["Applied (Pending)", "Accepted", "Rejected"],
+            datasets: [
+              {
+                label: "Applications",
+                data: [parseInt(stats.pending) || 0, parseInt(stats.accepted) || 0, parseInt(stats.rejected) || 0],
+                backgroundColor: ["#007bff", "#28a745", "#dc3545"],
+                borderColor: "#fff",
+                borderWidth: 2,
+                hoverOffset: 10,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  color: "#333",
+                  font: {
+                    size: 14,
+                    weight: "bold",
+                  },
+                },
+              },
+            },
+          },
+        });
+      });
+    </script>
+  </body>
+</html>

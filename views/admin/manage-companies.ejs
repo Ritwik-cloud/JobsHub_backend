@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%-include('./layouts/head') %>
+
+  <body id="page-top">
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <%-include('./layouts/sidebar') %>
+      <!-- End of Sidebar -->
+
+      <!-- Content Wrapper -->
+      <div id="content-wrapper" class="d-flex flex-column">
+        <!-- Main Content -->
+        <div id="content">
+          <!-- Topbar -->
+          <%-include('./layouts/topbar') %>
+          <!-- End of Topbar -->
+
+          <!-- Begin Page Content -->
+          <div class="container-fluid">
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+              <h1 class="h3 mb-0 text-gray-800">Manage Companies</h1>
+            </div>
+
+             <div class="card mb-3">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4 mb-2">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search by company name" />
+                  </div>
+
+                  <div class="col-md-3 mb-2">
+                    <select id="statusFilter" class="form-control">
+                      <option value="">All Statuses</option>
+                      <option value="true">Active</option>
+                      <option value="false">Deactive</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-2 mb-2">
+                    <button id="filterBtn" class="btn btn-primary w-100">Filter</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card shadow mb-4">
+              <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Company List</h6>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-sm text-dark" width="100%" cellspacing="0">
+                    <thead>
+                      <tr>
+                        <th>Sl. No</th>
+                        <th>Company</th>
+                        <th>Website</th>
+                        <th>Created On</th>
+                        <th>Created By</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th class="text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="company-list"></tbody>
+                  </table>
+
+                  <nav class="d-flex justify-content-between align-items-center">
+                    <div id="page-info" class="text-muted pl-2"></div>
+                    <div class="flex-grow-1 d-flex justify-content-center">
+                      <div class="pagination-buttons">
+                        <button id="prev-btn" class="pagination-btn">Previous</button>
+                        <button id="next-btn" class="pagination-btn">Next</button>
+                      </div>
+                    </div>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /.container-fluid -->
+        </div>
+        <!-- End of Main Content -->
+
+        <!-- Footer -->
+        <%-include('./layouts/footer') %>
+        <!-- End of Footer -->
+      </div>
+      <!-- End of Content Wrapper -->
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+      <i class="fas fa-angle-up"></i>
+    </a>
+
+    <%-include('./layouts/footer-scripts') %>
+
+    <script>
+      $(document).ready(function () {
+        let currentPage = 1;
+        const limit = 10;
+
+        function fetchCompanies(currentPage) {
+
+         const search = $("#searchInput").val();
+          const status = $("#statusFilter").val();
+
+          $.ajax({
+            url: "/admin/companies/pagination",
+            type: "GET",
+            data: {
+              page: currentPage,
+              limit: limit,
+              search,
+              status
+            },
+            success: function (response) {
+              // console.log(response.data);
+              renderCompanies(response.data);
+              setupPagination(response.totalPages, response.page);
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+            },
+          });
+        }
+
+        $("#prev-btn").on("click", function () {
+          if (currentPage > 1) {
+            currentPage--;
+            fetchCompanies(currentPage);
+          }
+        });
+
+        $("#next-btn").on("click", function () {
+          currentPage++;
+          fetchCompanies(currentPage);
+        });
+
+        function setupPagination(totalPages, currentPage) {
+          $("#page-info").text(`Page ${currentPage} of ${totalPages}`);
+
+          $("#prev-btn").prop("disabled", currentPage === 1);
+          $("#next-btn").prop("disabled", currentPage === totalPages || totalPages === 0);
+        }
+
+        function renderCompanies(data) {
+          // console.log(data);
+          $("#company-list").empty();
+
+          let html = "";
+          if (data.length > 0) {
+            data.forEach((company, index) => {
+              let statusClass = "";
+              if (company.isActive === true) {
+                statusClass = "badge badge-success";
+              } else {
+                statusClass = "badge badge-danger";
+              }
+              let statusText = "";
+              if (company.isActive === true) {
+                statusText = "Active";
+              } else if (company.isActive === false) {
+                statusText = "Deactive";
+              }
+
+              html += `
+                                                    <tr class="fade-in" id='row-${company._id}'>
+                                                          <td>${index + 1}</td>
+                                                          <td>
+                                                            <div class="d-flex align-items-center">
+          <img src="${company.logo ? "/" + company.logo : "/assets/img/no-image.png"}"
+               alt="Company Logo"
+               class="mr-2 rounded"
+               style="width: 50px; height: 50px; object-fit: contain;">
+          <span>${company.name}</span>
+        </div>
+                                                        </td>
+                                                        <td><a href="${company.website}" >${company.website}</a> </td>
+                                                        <td>${new Date(company.createdAt).toLocaleDateString("en-IN", {
+                                                          day: "2-digit",
+                                                          month: "2-digit",
+                                                          year: "numeric",
+                                                        })}</td>
+                                                          <td>${company.createdBy.name}</td>
+                                                          <td>${company.createdBy.email}</td>
+                                                          <td><span class="${statusClass} company-staus">${statusText}</span></td>
+                                                        <td class="table-actions">
+                                            ${
+                                              company.isActive
+                                                ? `<button class="btn btn-warning btn-sm deactivate-btn" data-id="${company._id}">Deactivate</button>`
+                                                : `<button class="btn btn-success btn-sm activate-btn" data-id="${company._id}">Activate</button>`
+                                            }
+                                            </td>    
+                                                        
+                                                    `;
+            });
+          } else {
+            html += `
+                                                <tr>
+                                                <td colspan='8' class='text-center'> No Data Found </td>
+                                                </tr>
+                                                `;
+          }
+          $("#company-list").html(html);
+          $(".fade-in").hide().fadeIn(500);
+        }
+
+        fetchCompanies(currentPage);
+
+         $("#filterBtn").on("click", () => {
+          fetchCompanies(1);
+        });
+
+        $(document).on("click", ".activate-btn", function (e) {
+          if (!confirm("Are you sure you want to activate this company?")) return;
+
+          const companyId = $(this).data("id");
+          const $button = $(this);
+
+          const originalText = $button.html();
+
+          $button.prop("disabled", true).html(`
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    <span class="ml-1">Activating...</span>
+  `);
+
+          $.ajax({
+            url: `/admin/companies/${companyId}/activate`,
+            type: "PUT",
+            success: function (response) {
+              // console.log(response);
+              $button.removeClass("btn-success activate-btn").addClass("btn-warning deactivate-btn").text("Deactivate").prop("disabled", false);
+
+              const $row = $(`#row-${companyId}`);
+
+              $row.find("span.company-staus").removeClass("badge-danger").addClass("badge-success").text("Active");
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+
+              $button.html(originalText).prop("disabled", false);
+            },
+          });
+        });
+
+        $(document).on("click", ".deactivate-btn", function (e) {
+          if (!confirm("Are you sure you want to deactivate this company?.This will inactive all recruiters and jobs of this company.")) return;
+
+          const companyId = $(this).data("id");
+          const $button = $(this);
+
+          const originalText = $button.html();
+
+          $button.prop("disabled", true).html(`
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    <span class="ml-1">Deactivating...</span>
+  `);
+
+          $.ajax({
+            url: `/admin/companies/${companyId}/deactivate`,
+            type: "PUT",
+            success: function (response) {
+              $button.removeClass("btn-success deactivate-btn").addClass("btn-success activate-btn").text("Activate").prop("disabled", false);
+
+              const $row = $(`#row-${companyId}`);
+
+              $row.find("span.company-staus").removeClass("badge-success").addClass("badge-danger").text("Deactive");
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+
+              const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+              Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: errorMsg,
+                showConfirmButton: true,
+              });
+
+              $button.html(originalText).prop("disabled", false);
+            },
+          });
+        });
+
+        function handleAuthRedirect(error) {
+          const response = error.responseJSON;
+          if (error.status === 401) {
+            window.location.href = "/auth/login";
+            return true;
+          }
+          return false;
+        }
+      });
+    </script>
+  </body>
+</html>

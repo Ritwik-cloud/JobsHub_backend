@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%-include('./layouts/head') %>
+
+  <body id="page-top">
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+      <!-- Sidebar -->
+      <%-include('./layouts/sidebar') %>
+      <!-- End of Sidebar -->
+
+      <!-- Content Wrapper -->
+      <div id="content-wrapper" class="d-flex flex-column">
+        <!-- Main Content -->
+        <div id="content">
+          <!-- Topbar -->
+          <%-include('./layouts/topbar') %>
+          <!-- End of Topbar -->
+
+          <!-- Begin Page Content -->
+          <div class="container-fluid">
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+              <h1 class="h3 mb-0 text-gray-800">Portal Setting</h1>
+            </div>
+
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <div id="setting-add-msg" class="alert alert-success d-none" role="alert"></div>
+                <form id="portalSettingForm" enctype="multipart/form-data">
+                  <div class="form-group">
+                    <label for="portalName">Portal Name</label>
+                    <input type="text" class="form-control" id="portalName" name="portalName" value="<%= portalSettings && portalSettings.portalName ? portalSettings.portalName : '' %>" />
+                    <div class="text-danger" data-error="portalName"></div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="portalEmail">Portal Email</label>
+                    <input type="email" class="form-control" id="portalEmail" name="portalEmail" value="<%= portalSettings && portalSettings.portalEmail ? portalSettings.portalEmail : '' %>" />
+                    <div class="text-danger" data-error="portalEmail"></div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="contactNumber">Contact Number</label>
+                    <input type="text" class="form-control" id="contactNumber" name="contactNumber" value="<%= portalSettings && portalSettings.contactNumber ? portalSettings.contactNumber : '' %>" />
+                    <div class="text-danger" data-error="contactNumber"></div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="address">Address</label>
+                    <textarea class="form-control" id="address" name="address" rows="2"><%= portalSettings && portalSettings.address ? portalSettings.address : '' %></textarea>
+                    <div class="text-danger" data-error="address"></div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="aboutUs">About Us</label>
+                    <textarea class="form-control" id="aboutUs" name="aboutUs" rows="3"><%= portalSettings && portalSettings.aboutUs ? portalSettings.aboutUs : '' %></textarea>
+                    <div class="text-danger" data-error="aboutUs"></div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="logo">Upload Logo</label>
+                    <div class="d-flex align-items-center gap-3">
+                      <input type="file" class="form-control-file" id="logo" name="logo" style="max-width: 250px" />
+                      <img id="logoPreview" src="/<%= portalSettings && portalSettings.logo ? portalSettings.logo : '' %>" style="max-width: 100px;"/>
+                    </div>
+                    <div class="text-danger" data-error="logo"></div>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary">Save Settings</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <!-- /.container-fluid -->
+        </div>
+        <!-- End of Main Content -->
+
+        <!-- Footer -->
+        <%-include('./layouts/footer') %>
+        <!-- End of Footer -->
+      </div>
+      <!-- End of Content Wrapper -->
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+      <i class="fas fa-angle-up"></i>
+    </a>
+
+    <%-include('./layouts/footer-scripts') %>
+
+    <script>
+      $(document).ready(function () {
+        $("#portalSettingForm").submit(function (e) {
+          e.preventDefault();
+
+          const portalName = $("#portalName").val().trim();
+          const portalEmail = $("#portalEmail").val().trim();
+          const contactNumber = $("#contactNumber").val().trim();
+          const address = $("#address").val().trim();
+          const aboutUs = $("#aboutUs").val().trim();
+          const logo = $("#logo")[0].files[0];
+
+          $("[data-error]").text("");
+
+          let hasError = false;
+          if (!portalName) {
+            $('[data-error="portalName"]').text("Portal name is required.");
+            hasError = true;
+          }
+          if (!portalEmail) {
+            $('[data-error="portalEmail"]').text("Email is required.");
+            hasError = true;
+          }
+          if (!contactNumber) {
+            $('[data-error="contactNumber"]').text("Contact Number is required.");
+            hasError = true;
+          }
+          if (!address) {
+            $('[data-error="address"]').text("Address is required.");
+            hasError = true;
+          }
+          if (!aboutUs) {
+            $('[data-error="aboutUs"]').text("About us is required.");
+            hasError = true;
+          } else {
+            if (aboutUs.length < 50) {
+              $('[data-error="aboutUs"]').text("About Us must be at least 50 characters.");
+              hasError = true;
+            }
+            if (aboutUs.length > 500) {
+              $('[data-error="aboutUs"]').text("About Us must not exceed 500 characters.");
+              hasError = true;
+            }
+          }
+
+          if (!logo && !$("#logoPreview").attr("src")) {
+            $('[data-error="logo"]').text("Logo is required.");
+            hasError = true;
+          }
+
+          if (hasError) return;
+
+          const formData = new FormData(this);
+
+          console.log(formData);
+
+          $.ajax({
+            url: "/admin/portal-setting/save",
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+              
+
+              $("#setting-add-msg").text(response.message).removeClass("d-none");
+
+              setTimeout(() => {
+                location.reload();
+              }, 1000);
+            },
+            error: function (xhr) {
+              if (handleAuthRedirect(xhr)) return;
+              if (xhr.responseJSON && xhr.responseJSON.errors) {
+                const errors = xhr.responseJSON.errors;
+                for (let field in errors) {
+                  $(`[data-error="${field}"]`).text(errors[field]);
+                }
+              } else {
+                const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong. Please try again later.";
+
+                Swal.fire({
+                  icon: "error",
+                  title: "Oops...",
+                  text: errorMsg,
+                  showConfirmButton: true,
+                });
+              }
+            },
+          });
+        });
+
+        $("#logo").on("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+              $("#logoPreview").attr("src", e.target.result).show();
+            };
+
+            reader.readAsDataURL(file);
+          } else {
+            $("#logoPreview").hide();
+          }
+        });
+
+        function handleAuthRedirect(error) {
+          const response = error.responseJSON;
+          if (error.status === 401) {
+            window.location.href = "/auth/login";
+            return true;
+          }
+          return false;
+        }
+      });
+    </script>
+  </body>
+</html>
