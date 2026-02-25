@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const courseRepositories = require('../repositories/courseRepositorie');
+const courseRepositories = require('../repositories/courseRepositories');
 const specializationRepositories = require('../repositories/specializationRepositories');
 
 class CourseController {
