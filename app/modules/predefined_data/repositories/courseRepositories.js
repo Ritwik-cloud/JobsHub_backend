@@ -3,7 +3,7 @@ const courseModel = require('../model/courseModel');
 const mongoose = require('mongoose');
 const specializationModel = require('../model/specializationModel');
 
-const courseRepositories = {
+const courseRepositorie = {
 
     findCourseByname: async (name) => {
         return await courseModel.findOne({ name: { $regex: new RegExp('^' + name + '$', 'i') } })
@@ -76,4 +76,4 @@ const courseRepositories = {
     }
 }
 
-module.exports = courseRepositories
+module.exports = courseRepositorie
